@@ -3,56 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Acesso ao Sistema</title>
+    <title>Matrix ERP | Zion Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #05070a;
+            background-image: radial-gradient(circle at 2px 2px, #1e2533 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+        .glass {
+            background: rgba(15, 18, 26, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        .input-dark {
+            background: #0f121a;
+            border: 1px solid #1e2533;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .input-dark:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen overflow-hidden">
+<body class="flex items-center justify-center h-screen overflow-hidden p-4">
 
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-4">
+    <div class="w-full max-w-md glass p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl"></div>
         
-<div class="text-center mb-8">
-    <div class="inline-block bg-gray-900 p-2 rounded-full mb-3 shadow-md border-2 border-yellow-500/20">
-        <img src="zion_logo.png" alt="Logo Matrix ERP" class="w-24 h-24 object-contain block mx-auto">
-    </div>
-    <h1 class="text-2xl font-bold text-gray-800">Matrix ERP Gestão</h1>
-    <p class="text-sm text-gray-500 mt-1">Acesso restrito a colaboradores</p>
-</div>
+        <div class="text-center mb-10 relative">
+            <img src="zionclear.png" alt="Zion Logo" class="w-24 mx-auto mb-4 brightness-0 invert opacity-90">
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">Matrix <span class="text-blue-500">ERP</span></h1>
+            <p class="text-gray-400 text-sm mt-2">Identifique-se para acessar o painel</p>
+        </div>
 
-        <form id="form-login" class="space-y-5">
+        <form id="form-login" class="space-y-6 relative">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                <input type="email" id="email" required placeholder="ex: oswaldo@mpleao.com.br" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">E-mail Corporativo</label>
+                <input type="email" id="email" required placeholder="seu@email.com" 
+                    class="w-full p-4 input-dark rounded-xl text-sm">
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                <input type="password" id="senha" required placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Chave de Acesso</label>
+                <input type="password" id="senha" required placeholder="••••••••" 
+                    class="w-full p-4 input-dark rounded-xl text-sm">
             </div>
 
-            <button type="submit" id="btn-login" class="w-full bg-gray-900 text-yellow-500 font-bold text-lg py-3 rounded-lg hover:bg-gray-800 transition shadow-md">
-                Entrar no Sistema
+            <button type="submit" id="btn-login" 
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/20">
+                ENTRAR NO SISTEMA
             </button>
         </form>
 
-        <div id="msg-erro" class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm text-center">
+        <div id="msg-erro" class="hidden mt-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl text-xs text-center font-semibold">
         </div>
 
-        <div class="mt-8 text-center border-t border-gray-200 pt-4">
-            <p class="text-xs text-gray-500 flex items-center justify-center gap-1">
-                Powered by <span class="font-bold text-gray-800">Zion</span> 
-                <span class="text-yellow-500 mx-1">|</span> 
-                <span class="font-bold text-blue-700">Tecnologia e Sistemas</span>
+        <div class="mt-10 text-center border-t border-white/5 pt-6">
+            <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">
+                &copy; 2026 <span class="text-white">Zion Tecnologia</span> | Gestão Inteligente
             </p>
         </div>
-
     </div>
 
     <script type="module">
-        // Importa as funções oficiais do Firebase direto do Google
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Suas chaves (Atualizadas para Matrix Zion ERP)
         const firebaseConfig = {
             apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
             authDomain: "matrix-zion-erp.firebaseapp.com",
@@ -63,32 +85,25 @@
             measurementId: "G-PS30HSRHGP"
         };
 
-        // Inicializa o Firebase e o Autenticador
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Lógica de quando clicar em "Entrar"
         const formLogin = document.getElementById('form-login');
         const btnLogin = document.getElementById('btn-login');
         const msgErro = document.getElementById('msg-erro');
 
         formLogin.addEventListener('submit', (e) => {
-            e.preventDefault(); // Evita recarregar a tela
-            
+            e.preventDefault();
             const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
 
-            // Muda o visual do botão
-            btnLogin.innerHTML = 'Autenticando...';
-            btnLogin.classList.add('opacity-75');
+            btnLogin.innerHTML = 'VALIDANDO...';
+            btnLogin.classList.add('opacity-50', 'cursor-not-allowed');
             msgErro.classList.add('hidden');
 
-            // Tenta fazer o login no Firebase
-            // browserSessionPersistence: token do Firebase é apagado ao fechar o navegador
             setPersistence(auth, browserSessionPersistence)
                 .then(() => signInWithEmailAndPassword(auth, email, senha))
                 .then((userCredential) => {
-                    // Cria tabId e flags de sessão para esta aba
                     const tabId = Date.now().toString();
                     sessionStorage.setItem('tabId', tabId);
                     sessionStorage.setItem('userLogged', 'true');
@@ -96,9 +111,9 @@
                     window.location.href = 'dashboard.html';
                 })
                 .catch((error) => {
-                    btnLogin.innerHTML = 'Entrar no Sistema';
-                    btnLogin.classList.remove('opacity-75');
-                    msgErro.innerText = "E-mail ou senha incorretos.";
+                    btnLogin.innerHTML = 'ENTRAR NO SISTEMA';
+                    btnLogin.classList.remove('opacity-50', 'cursor-not-allowed');
+                    msgErro.innerText = "Credenciais inválidas. Verifique os dados.";
                     msgErro.classList.remove('hidden');
                 });
         });
