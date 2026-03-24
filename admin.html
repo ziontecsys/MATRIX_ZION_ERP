@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin — MPLEÃO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+  :root {
+    --bg:#0f1117;--surface:#181c27;--border:#2a2f3e;--accent:#3b7ff5;
+    --accent2:#22d3a5;--warn:#f59e0b;--danger:#ef4444;--text:#e2e8f0;--muted:#64748b;
+    --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;visibility:hidden;}
+  header{background:var(--surface);border-bottom:2px solid var(--danger);padding:16px 32px;display:flex;align-items:center;gap:16px;}
+  .logo{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent);}
+  .admin-badge{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:var(--danger);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:1px;}
+  .user-info{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .back-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;text-decoration:none;transition:all .15s;margin-left:12px;}
+  .back-btn:hover{color:var(--text);border-color:var(--muted);}
+
+  main{max-width:1100px;margin:0 auto;padding:32px;}
+
+  .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin:32px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .section-title:first-child{margin-top:0;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:8px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:all .2s;text-decoration:none;display:flex;flex-direction:column;gap:10px;}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+  .card.danger{border-color:rgba(239,68,68,.3);}
+  .card.danger:hover{border-color:var(--danger);}
+  .card-icon{font-size:28px;}
+  .card-title{font-size:15px;font-weight:700;}
+  .card-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+  /* ── Painel de conteúdo ── */
+  .panel-wrap{display:none;margin-top:24px;}
+  .panel-wrap.visible{display:block;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:20px;}
+  .ptitle{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px;}
+  .pdesc{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:8px;border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#5590f7;transform:translateY(-1px);}
+  .btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-success{background:var(--accent2);color:#0f1117;}
+  .btn-success:hover{background:#34e8b8;transform:translateY(-1px);}
+  .btn-success:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-danger:hover{background:#f87171;transform:translateY(-1px);}
+  .btn-danger:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+  .btn-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:20px;}
+
+  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:44px 32px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+  .upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(59,127,245,.05);}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-icon{font-size:40px;margin-bottom:12px;}
+  .upload-title{font-size:16px;font-weight:600;margin-bottom:6px;}
+  .upload-sub{font-size:13px;color:var(--muted);}
+  .upload-selected{display:none;background:rgba(34,211,165,.08);border:1px solid rgba(34,211,165,.25);border-radius:8px;padding:14px 18px;margin-top:14px;align-items:center;gap:12px;}
+  .upload-selected.visible{display:flex;}
+  .fname{font-family:var(--mono);font-size:13px;color:var(--accent2);font-weight:600;}
+
+  .warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);border-radius:10px;padding:16px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;}
+  .danger-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:16px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;}
+  .box-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+  .box-title{font-size:13px;font-weight:700;margin-bottom:4px;}
+  .box-title.warn{color:var(--warn);}
+  .box-title.danger{color:var(--danger);}
+  .box-text{font-size:13px;color:var(--muted);line-height:1.6;}
+
+  .stats-bar{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;}
+  .stat{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;}
+  .stat-val{font-family:var(--mono);font-size:20px;font-weight:600;}
+  .stat-val.green{color:var(--accent2);}
+  .stat-val.blue{color:var(--accent);}
+  .stat-val.red{color:var(--danger);}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+  .log{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:12px;color:var(--muted);max-height:220px;overflow-y:auto;line-height:1.7;}
+  .log .ok{color:var(--accent2);}
+  .log .upd{color:var(--accent);}
+  .log .err{color:var(--danger);}
+  .log .warn{color:var(--warn);}
+
+  .confirm-input{background:var(--bg);border:1px solid var(--danger);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:14px;width:100%;margin-top:10px;outline:none;}
+  .confirm-input:focus{border-color:var(--accent);}
+
+  .progress-wrap{display:none;margin-top:16px;}
+  .progress-wrap.visible{display:block;}
+  .progress-bar-bg{background:var(--border);border-radius:99px;height:8px;overflow:hidden;margin-bottom:6px;}
+  .progress-bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .3s;}
+  .progress-label{font-size:12px;color:var(--muted);font-family:var(--mono);}
+
+  .collections{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:20px;}
+  .coll-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:10px;}
+  .coll-icon{font-size:20px;}
+  .coll-name{font-size:12px;font-weight:600;}
+  .coll-count{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent2);margin-top:2px;}
+
+  .hidden{display:none!important;}
+
+  /* Tela de acesso negado */
+  #acesso-negado{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;gap:16px;}
+  #acesso-negado .icon{font-size:64px;}
+  #acesso-negado h2{font-size:22px;font-weight:700;color:var(--danger);}
+  #acesso-negado p{font-size:14px;color:var(--muted);max-width:360px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">MPLEÃO</span>
+  <span class="admin-badge">🔐 Admin</span>
+  <span class="user-info" id="user-email">—</span>
+  <a href="index.html" class="back-btn">← Voltar ao sistema</a>
+</header>
+
+<!-- Acesso negado -->
+<div id="acesso-negado">
+  <div class="icon">🚫</div>
+  <h2>Acesso negado</h2>
+  <p>Você não tem permissão para acessar o painel administrativo.<br>Entre em contato com o administrador do sistema.</p>
+  <a href="index.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao sistema</a>
+</div>
+
+<main id="main-admin">
+
+  <!-- ══ FERRAMENTAS DE DADOS ══ -->
+  <div class="section-title">Ferramentas de dados</div>
+  <div class="cards">
+    <div class="card" onclick="abrirPainel('painel-backup')">
+      <span class="card-icon">💾</span>
+      <div class="card-title">Backup Completo</div>
+      <div class="card-desc">Exportar todas as coleções do banco de dados para um arquivo Excel.</div>
+    </div>
+    <div class="card" onclick="abrirPainel('painel-restore')">
+      <span class="card-icon">🔄</span>
+      <div class="card-title">Restaurar / Importar Banco</div>
+      <div class="card-desc">Importar um backup Excel com upsert — atualiza existentes e cria novos registros.</div>
+    </div>
+    <div class="card" onclick="window.location.href='importar-tabela.html'">
+      <span class="card-icon">📥</span>
+      <div class="card-title">Importar Produtos</div>
+      <div class="card-desc">Upload de planilha Excel para cadastrar ou atualizar produtos em massa.</div>
+    </div>
+  </div>
+
+  <!-- ══ ADMINISTRAÇÃO ══ -->
+  <div class="section-title">Administração</div>
+  <div class="cards">
+    <div class="card" onclick="abrirPainel('painel-usuarios')">
+      <span class="card-icon">👤</span>
+      <div class="card-title">Gerenciar Usuários</div>
+      <div class="card-desc">Conceder ou revogar permissão de administrador para usuários do sistema.</div>
+    </div>
+    <div class="card" onclick="abrirPainel('painel-config')">
+      <span class="card-icon">⚙️</span>
+      <div class="card-title">Configurações do Sistema</div>
+      <div class="card-desc">Definir valores padrão de combustível e consumo usados no cálculo de frete.</div>
+    </div>
+    <div class="card danger" onclick="abrirPainel('painel-reset')">
+      <span class="card-icon">☠️</span>
+      <div class="card-title">Reset Total do Sistema</div>
+      <div class="card-desc">Apaga TODOS os dados do banco de dados. Ação irreversível.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PAINÉIS ══════════════ -->
+
+  <!-- BACKUP -->
+  <div class="panel-wrap" id="painel-backup">
+    <div class="panel">
+      <div class="ptitle">💾 Exportar Backup Completo</div>
+      <div class="pdesc">Gera um Excel com todas as coleções. Use para backups periódicos ou para editar dados em massa antes de reimportar.</div>
+      <div class="collections">
+        <div class="coll-card"><span class="coll-icon">👥</span><div><div class="coll-name">Clientes</div><div class="coll-count" id="cnt-clientes">—</div></div></div>
+        <div class="coll-card"><span class="coll-icon">📦</span><div><div class="coll-name">Produtos</div><div class="coll-count" id="cnt-produtos">—</div></div></div>
+        <div class="coll-card"><span class="coll-icon">📋</span><div><div class="coll-name">Pedidos</div><div class="coll-count" id="cnt-pedidos">—</div></div></div>
+        <div class="coll-card"><span class="coll-icon">💰</span><div><div class="coll-name">Parcelas</div><div class="coll-count" id="cnt-parcelas">—</div></div></div>
+      </div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn btn-success" id="btn-exportar" onclick="exportarBackup()" disabled>⏳ Carregando...</button>
+        <button class="btn btn-ghost" onclick="fecharPainel('painel-backup')">Fechar</button>
+      </div>
+      <div class="progress-wrap" id="prog-export">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-export-bar" style="width:0%"></div></div>
+        <div class="progress-label" id="prog-export-label">Preparando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESTORE -->
+  <div class="panel-wrap" id="painel-restore">
+    <div class="panel">
+      <div class="ptitle">🔄 Restaurar / Importar Banco</div>
+      <div class="danger-box">
+        <span class="box-icon">🚨</span>
+        <div>
+          <div class="box-title danger">OPERAÇÃO DE ALTO RISCO</div>
+          <div class="box-text">Registros com o mesmo <code>_id</code> serão sobrescritos. Faça um backup antes de importar. Erros podem causar perda irreversível de dados.</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Upload -->
+      <div id="restore-step1">
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="file-input" accept=".xlsx" onchange="aoSelecionarArquivo(event)">
+          <div class="upload-icon">📂</div>
+          <div class="upload-title">Arraste o arquivo ou clique para selecionar</div>
+          <div class="upload-sub">Arquivo <strong>.xlsx</strong> exportado por esta ferramenta</div>
+        </div>
+        <div class="upload-selected" id="file-selected">
+          <span style="font-size:22px">✅</span>
+          <div><div class="fname" id="file-nome">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px" id="file-info">—</div></div>
+          <button class="btn btn-ghost" style="margin-left:auto;padding:6px 14px;font-size:12px" onclick="resetarUpload()">Trocar</button>
+        </div>
+        <div class="btn-row"><button class="btn btn-ghost" onclick="fecharPainel('painel-restore')">Fechar</button></div>
+      </div>
+
+      <!-- Step 2: Preview -->
+      <div id="restore-step2" class="hidden">
+        <div class="stats-bar" id="preview-stats"></div>
+        <div class="warn-box">
+          <span class="box-icon">ℹ️</span>
+          <div>
+            <div class="box-title warn">Lógica de importação</div>
+            <div class="box-text">
+              <strong style="color:var(--accent2)">✨ Novo</strong> — sem <code>_id</code> ou ID inexistente → será criado<br>
+              <strong style="color:var(--accent)">🔄 Atualizar</strong> — ID existente no banco → será atualizado (merge)
+            </div>
+          </div>
+        </div>
+        <div id="preview-detalhes"></div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="resetarUpload()">← Voltar</button>
+          <button class="btn btn-primary" onclick="mostrarConfirmacaoRestore()">Prosseguir →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirmação -->
+      <div id="restore-step3" class="hidden">
+        <div class="danger-box">
+          <span class="box-icon">⚠️</span>
+          <div>
+            <div class="box-title danger">Confirmar importação no banco de produção</div>
+            <div class="box-text">Para continuar, digite <strong style="color:#f87171">IMPORTAR</strong> abaixo.</div>
+          </div>
+        </div>
+        <div id="resumo-restore" style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:10px;"></div>
+        <input type="text" class="confirm-input" id="confirm-restore" placeholder="Digite IMPORTAR para confirmar" oninput="validarConfirmacaoRestore()">
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="voltarPreviewRestore()">← Voltar</button>
+          <button class="btn btn-danger" id="btn-executar-restore" onclick="executarRestore()" disabled>🔄 Executar Importação</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Resultado -->
+      <div id="restore-step4" class="hidden">
+        <div class="stats-bar" id="result-stats-restore"></div>
+        <div class="log" id="log-restore"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="window.location.href='index.html'">🏠 Voltar ao sistema</button>
+          <button class="btn btn-ghost" onclick="novaImportacao()">↩️ Nova importação</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USUÁRIOS -->
+  <div class="panel-wrap" id="painel-usuarios">
+    <div class="panel">
+      <div class="ptitle">👥 Gerenciar Usuários</div>
+
+      <!-- Criar novo usuário -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text)">➕ Criar Novo Usuário</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;flex-wrap:wrap;">
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">E-mail</label>
+            <input type="email" id="novo-email" placeholder="usuario@email.com"
+              style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Senha temporária</label>
+            <input type="text" id="novo-senha" placeholder="mínimo 6 caracteres"
+              style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Nível</label>
+            <select id="novo-admin" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);">
+              <option value="false">Usuário</option>
+              <option value="true">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:12px;">
+          <button onclick="criarUsuario()" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">✨ Criar Usuário</button>
+          <span id="msg-criar" style="font-size:12px;"></span>
+        </div>
+      </div>
+
+      <!-- Lista de usuários -->
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Usuários cadastrados</div>
+      <div id="lista-usuarios" style="margin-bottom:20px;">
+        <div style="color:var(--muted);font-size:13px">Carregando usuários...</div>
+      </div>
+      <div class="btn-row"><button class="btn btn-ghost" onclick="fecharPainel('painel-usuarios')">Fechar</button></div>
+    </div>
+  </div>
+
+  <!-- RESET TOTAL -->
+  <div class="panel-wrap" id="painel-reset">
+    <div class="panel">
+      <div class="ptitle">☠️ Reset Total do Sistema</div>
+      <div class="danger-box">
+        <span class="box-icon">🚨</span>
+        <div>
+          <div class="box-title danger">AÇÃO IRREVERSÍVEL — APAGA TODOS OS DADOS</div>
+          <div class="box-text">Esta operação deletará permanentemente todos os clientes, produtos, pedidos e parcelas. <strong style="color:#f87171">Não há como desfazer.</strong> Faça um backup antes de continuar.</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Para confirmar, digite <strong style="color:#f87171">APAGAR TUDO</strong> no campo abaixo:</div>
+      <input type="text" class="confirm-input" id="confirm-reset" placeholder="Digite APAGAR TUDO para confirmar" oninput="validarReset()">
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="fecharPainel('painel-reset')">Cancelar</button>
+        <button class="btn btn-danger" id="btn-reset" onclick="executarReset()" disabled>☠️ Apagar todos os dados</button>
+      </div>
+    </div>
+  </div>
+  <!-- CONFIG -->
+  <div class="panel-wrap" id="painel-config">
+    <div class="panel">
+      <div class="ptitle">⚙️ Configurações do Sistema</div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">
+        Valores padrão usados no cálculo de frete em todos os pedidos. Ao salvar, o sistema passa a usar esses valores em novos pedidos.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:400px;">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">⛽ Preço do Combustível (R$/L)</label>
+          <input type="number" id="cfg-litro" step="0.01" min="0" placeholder="ex: 4.20"
+            style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface); color:var(--muted);">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">⚡ Consumo do Veículo (km/L)</label>
+          <input type="number" id="cfg-consumo" step="0.1" min="0.1" placeholder="ex: 9.0"
+            style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface); color:var(--muted);">
+        </div>
+      </div>
+      <div id="cfg-msg" style="margin-top:12px;font-size:13px;min-height:20px;"></div>
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-ghost" onclick="fecharPainel('painel-config')">Fechar</button>
+        <button class="btn btn-primary" onclick="salvarConfiguracoes()">💾 Salvar Configurações</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac",
+  authDomain: "mpleaoerp.firebaseapp.com",
+  projectId: "mpleaoerp"
+});
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+let dadosDB = { clientes:[], produtos:[], pedidos:[], parcelas:[] };
+let dadosArquivo = {};
+let usuarioAtual = null;
+
+// ── Auth Guard + verificação admin ──────────────────────
+onAuthStateChanged(auth, async user => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  usuarioAtual = user;
+  document.getElementById('user-email').textContent = user.email;
+
+  // Verifica se tem admin:true no Firestore
+  const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+  const isAdmin = userDoc.exists() && userDoc.data().admin === true;
+
+  document.body.style.visibility = 'visible';
+
+  if (!isAdmin) {
+    document.getElementById('main-admin').style.display = 'none';
+    document.getElementById('acesso-negado').style.display = 'flex';
+    return;
+  }
+
+  await carregarDados();
+});
+
+async function carregarDados() {
+  const cols = ['clientes','produtos','pedidos','parcelas'];
+  const ids  = ['cnt-clientes','cnt-produtos','cnt-pedidos','cnt-parcelas'];
+  for (let i = 0; i < cols.length; i++) {
+    const snap = await getDocs(collection(db, cols[i]));
+    dadosDB[cols[i]] = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+    const el = document.getElementById(ids[i]);
+    if (el) el.textContent = snap.size;
+  }
+  const btn = document.getElementById('btn-exportar');
+  if (btn) { btn.disabled = false; btn.innerHTML = '💾 Exportar Backup Excel'; }
+  await carregarUsuarios();
+}
+
+// ══════════════════════════════════════════════════════════
+// USUÁRIOS
+// ══════════════════════════════════════════════════════════
+async function carregarUsuarios() {
+  const snap = await getDocs(collection(db, 'usuarios'));
+  const lista = document.getElementById('lista-usuarios');
+  if (!lista) return;
+  if (snap.empty) {
+    lista.innerHTML = `<div style="color:var(--muted);font-size:13px">Nenhum usuário cadastrado ainda.</div>`;
+    return;
+  }
+  lista.innerHTML = snap.docs.map(d => {
+    const u = d.data();
+    const isAdmin = u.admin === true;
+    const eVoce = d.id === usuarioAtual?.uid;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-size:20px">${isAdmin ? '🔐' : '👤'}</span>
+        <div style="flex:1;min-width:160px;">
+          <div style="font-size:13px;font-weight:600">${u.email || d.id} ${eVoce ? '<span style="font-size:11px;color:var(--muted)">(você)</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">${d.id}</div>
+        </div>
+        <span style="font-size:11px;padding:3px 10px;border-radius:99px;font-weight:700;
+          ${isAdmin ? 'background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)' : 'background:var(--border);color:var(--muted)'}">
+          ${isAdmin ? 'ADMIN' : 'Usuário'}
+        </span>
+        ${!eVoce ? `
+          <button onclick="toggleAdmin('${d.id}', ${isAdmin}, '${u.email||''}')" title="${isAdmin ? 'Remover admin' : 'Tornar admin'}"
+            style="background:${isAdmin ? 'rgba(239,68,68,.1)' : 'rgba(59,127,245,.1)'};
+              border:1px solid ${isAdmin ? 'rgba(239,68,68,.3)' : 'rgba(59,127,245,.3)'};
+              color:${isAdmin ? 'var(--danger)' : 'var(--accent)'};
+              border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
+            ${isAdmin ? '✕ Admin' : '+ Admin'}
+          </button>
+          <button onclick="resetarSenha('${u.email||''}')" title="Enviar e-mail de redefinição de senha"
+            style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:#ca8a04;
+              border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
+            🔑 Reset senha
+          </button>
+          <button onclick="excluirUsuario('${d.id}', '${u.email||''}')" title="Excluir usuário"
+            style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--danger);
+              border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
+            🗑️
+          </button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+window.toggleAdmin = async function(uid, isAdmin, email) {
+  const r = await Swal.fire({
+    title: isAdmin ? 'Remover admin?' : 'Tornar admin?',
+    text: `${isAdmin ? 'Remover permissão de admin de' : 'Conceder permissão de admin para'} ${email || uid}?`,
+    icon: 'warning', showCancelButton: true,
+    confirmButtonColor: isAdmin ? '#dc2626' : '#3b7ff5', cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar'
+  });
+  if (!r.isConfirmed) return;
+  await setDoc(doc(db, 'usuarios', uid), { admin: !isAdmin }, { merge: true });
+  await carregarUsuarios();
+  Swal.fire({ icon: 'success', title: 'Atualizado!', timer: 1500, showConfirmButton: false });
+};
+
+window.resetarSenha = async function(email) {
+  if (!email) { Swal.fire({ icon: 'warning', title: 'Sem e-mail', text: 'Este usuário não tem e-mail registrado.' }); return; }
+  const r = await Swal.fire({
+    title: '🔑 Resetar senha?',
+    text: `Enviar e-mail de redefinição para ${email}?`,
+    icon: 'question', showCancelButton: true,
+    confirmButtonColor: '#ca8a04', cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Enviar e-mail', cancelButtonText: 'Cancelar'
+  });
+  if (!r.isConfirmed) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    Swal.fire({ icon: 'success', title: 'E-mail enviado!', text: `Instruções enviadas para ${email}.`, confirmButtonColor: '#3b7ff5' });
+  } catch(e) {
+    Swal.fire({ icon: 'error', title: 'Erro', text: e.message });
+  }
+};
+
+window.excluirUsuario = async function(uid, email) {
+  const r = await Swal.fire({
+    title: '🗑️ Excluir usuário?',
+    html: `Remove <b>${email || uid}</b> do sistema.<br><span style="font-size:12px;color:#9ca3af">O acesso será bloqueado imediatamente.</span>`,
+    icon: 'warning', showCancelButton: true,
+    confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Excluir', cancelButtonText: 'Cancelar'
+  });
+  if (!r.isConfirmed) return;
+  try {
+    await deleteDoc(doc(db, 'usuarios', uid));
+    await carregarUsuarios();
+    Swal.fire({ icon: 'success', title: 'Removido!', timer: 2000, showConfirmButton: false });
+  } catch(e) { Swal.fire({ icon: 'error', title: 'Erro', text: e.message }); }
+};
+
+window.criarUsuario = async function() {
+  const email = document.getElementById('novo-email').value.trim();
+  const senha = document.getElementById('novo-senha').value.trim();
+  const isAdm = document.getElementById('novo-admin').value === 'true';
+  const msg   = document.getElementById('msg-criar');
+  if (!email || !email.includes('@')) { msg.innerHTML = '<span style="color:red">⚠️ Informe um e-mail válido.</span>'; return; }
+  if (!senha || senha.length < 6)     { msg.innerHTML = '<span style="color:red">⚠️ Senha deve ter ao menos 6 caracteres.</span>'; return; }
+  msg.innerHTML = '<span style="color:var(--muted)">⏳ Criando usuário...</span>';
+  try {
+    const { initializeApp, getApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getAuth: getAuth2, createUserWithEmailAndPassword, signOut: signOut2 } =
+      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    let appSec;
+    try { appSec = getApp('sec'); } catch { appSec = initializeApp({ apiKey:"AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac", authDomain:"mpleaoerp.firebaseapp.com", projectId:"mpleaoerp" }, 'sec'); }
+    const authSec = getAuth2(appSec);
+    const cred = await createUserWithEmailAndPassword(authSec, email, senha);
+    await setDoc(doc(db, 'usuarios', cred.user.uid), { email, admin: isAdm, criado_em: new Date().toISOString(), criado_por: usuarioAtual?.email || '' });
+    await signOut2(authSec);
+    document.getElementById('novo-email').value = '';
+    document.getElementById('novo-senha').value = '';
+    document.getElementById('novo-admin').value = 'false';
+    msg.innerHTML = `<span style="color:var(--accent2)">✅ Usuário <b>${email}</b> criado!</span>`;
+    await carregarUsuarios();
+  } catch(e) {
+    const erros = { 'auth/email-already-in-use':'E-mail já cadastrado.', 'auth/invalid-email':'E-mail inválido.', 'auth/weak-password':'Senha muito fraca.' };
+    msg.innerHTML = `<span style="color:red">❌ ${erros[e.code] || e.message}</span>`;
+  }
+};
+
+// ══════════════════════════════════════════════════════════
+// BACKUP
+// ══════════════════════════════════════════════════════════
+window.exportarBackup = async function() {
+  const btn = document.getElementById('btn-exportar');
+  const prog = document.getElementById('prog-export');
+  const bar  = document.getElementById('prog-export-bar');
+  const lbl  = document.getElementById('prog-export-label');
+  btn.disabled = true; btn.textContent = '⏳ Gerando...';
+  prog.classList.add('visible');
+
+  const wb = XLSX.utils.book_new();
+  const cols = [
+    { key:'clientes', nome:'CLIENTES', campos:['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes','data_cadastro'] },
+    { key:'produtos',  nome:'PRODUTOS', campos:['_id','codigo','codigo_fornecedor','descricao','categoria','cor','fornecedor','unidade','marca','valor_base','custo','estoque_atual','estoque_minimo','observacoes','data_cadastro'] },
+    { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','data_criacao'] },
+    { key:'parcelas',  nome:'PARCELAS', campos:['_id','numeroPedido','pedidoId','clienteNome','clienteCodigo','clienteId','valor','vencimento','status','numeroParcela','totalParcelas','dataCriacao','dataPagamento'] },
+  ];
+
+  for (let i = 0; i < cols.length; i++) {
+    const c = cols[i];
+    bar.style.width = ((i / cols.length) * 90) + '%';
+    lbl.textContent = `Processando ${c.nome}...`;
+    const rows = dadosDB[c.key].map(d => {
+      const row = {};
+      c.campos.forEach(f => {
+        let v = d[f];
+        if (v && typeof v === 'object' && v.seconds) v = new Date(v.seconds * 1000).toLocaleDateString('pt-BR');
+        else if (v && typeof v === 'object') v = JSON.stringify(v);
+        row[f] = v ?? '';
+      });
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [Object.fromEntries(c.campos.map(f => [f, '']))]);
+    ws['!cols'] = c.campos.map(f => ({ wch: Math.max(f.length + 2, 14) }));
+    XLSX.utils.book_append_sheet(wb, ws, c.nome);
+    await new Promise(r => setTimeout(r, 10));
+  }
+
+  // Instruções
+  const wsI = XLSX.utils.aoa_to_sheet([
+    ['BACKUP MPLEÃO ERP — INSTRUÇÕES'],[''],
+    ['• A coluna _id é o identificador único no Firebase — NÃO altere'],
+    ['• Registros com _id existente serão ATUALIZADOS na importação'],
+    ['• Linhas sem _id com dados serão CRIADAS como novos registros'],
+    ['• Faça sempre um backup antes de importar'],
+  ]);
+  wsI['!cols'] = [{ wch: 80 }];
+  XLSX.utils.book_append_sheet(wb, wsI, 'INSTRUÇÕES');
+
+  bar.style.width = '100%'; lbl.textContent = 'Pronto!';
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+  XLSX.writeFile(wb, `MPLEAO_Backup_${stamp}.xlsx`);
+  btn.disabled = false; btn.innerHTML = '✅ Backup gerado! Exportar novamente';
+};
+
+// ══════════════════════════════════════════════════════════
+// RESTORE
+// ══════════════════════════════════════════════════════════
+window.aoSelecionarArquivo = function(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      dadosArquivo = {};
+      const mapa = { 'CLIENTES':'clientes','PRODUTOS':'produtos','PEDIDOS':'pedidos','PARCELAS':'parcelas' };
+      for (const [aba, chave] of Object.entries(mapa)) {
+        if (wb.SheetNames.includes(aba)) dadosArquivo[chave] = XLSX.utils.sheet_to_json(wb.Sheets[aba], { defval: '' });
+      }
+      document.getElementById('file-nome').textContent = file.name;
+      document.getElementById('file-info').textContent = `${(file.size/1024).toFixed(1)} KB · ${Object.keys(dadosArquivo).length} coleção(ões)`;
+      document.getElementById('file-selected').classList.add('visible');
+      document.getElementById('upload-zone').style.display = 'none';
+      montarPreviewRestore();
+    } catch(err) { alert('Erro ao ler arquivo: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+function montarPreviewRestore() {
+  const statsEl = document.getElementById('preview-stats');
+  const detEl   = document.getElementById('preview-detalhes');
+  statsEl.innerHTML = ''; detEl.innerHTML = '';
+  const ordens = [
+    {key:'clientes',icon:'👥',label:'Clientes'},
+    {key:'produtos',icon:'📦',label:'Produtos'},
+    {key:'pedidos', icon:'📋',label:'Pedidos'},
+    {key:'parcelas',icon:'💰',label:'Parcelas'},
+  ];
+  for (const { key, icon, label } of ordens) {
+    if (!dadosArquivo[key]) continue;
+    const linhas  = dadosArquivo[key].filter(r => String(r._id||'').trim() !== '');
+    const semId   = dadosArquivo[key].filter(r => String(r._id||'').trim() === '' && Object.values(r).filter(v => String(v).trim()).length > 1);
+    const idsDB   = new Set(dadosDB[key].map(r => r._id));
+    let novos = semId.length, atualiza = 0;
+    linhas.forEach(r => idsDB.has(String(r._id)) ? atualiza++ : novos++);
+    statsEl.innerHTML += `<div class="stat"><div class="stat-val blue">${icon} ${linhas.length + semId.length}</div><div class="stat-label">${label}</div></div>`;
+    detEl.innerHTML   += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:13px;">
+      <strong>${icon} ${label}</strong>
+      <span style="color:var(--accent2);margin-left:14px">✨ ${novos} novos</span>
+      <span style="color:var(--accent);margin-left:10px">🔄 ${atualiza} a atualizar</span></div>`;
+  }
+  document.getElementById('restore-step1').classList.add('hidden');
+  document.getElementById('restore-step2').classList.remove('hidden');
+}
+
+window.mostrarConfirmacaoRestore = function() {
+  let html = '';
+  const ordens = [{key:'clientes',icon:'👥',label:'Clientes'},{key:'produtos',icon:'📦',label:'Produtos'},{key:'pedidos',icon:'📋',label:'Pedidos'},{key:'parcelas',icon:'💰',label:'Parcelas'}];
+  for (const { key, icon, label } of ordens) {
+    if (dadosArquivo[key]) html += `${icon} <strong>${label}:</strong> ${dadosArquivo[key].length} registro(s)<br>`;
+  }
+  document.getElementById('resumo-restore').innerHTML = html;
+  document.getElementById('confirm-restore').value = '';
+  document.getElementById('btn-executar-restore').disabled = true;
+  document.getElementById('restore-step2').classList.add('hidden');
+  document.getElementById('restore-step3').classList.remove('hidden');
+};
+
+window.validarConfirmacaoRestore = function() {
+  document.getElementById('btn-executar-restore').disabled =
+    document.getElementById('confirm-restore').value.trim().toUpperCase() !== 'IMPORTAR';
+};
+
+window.voltarPreviewRestore = function() {
+  document.getElementById('restore-step3').classList.add('hidden');
+  document.getElementById('restore-step2').classList.remove('hidden');
+};
+
+window.executarRestore = async function() {
+  document.getElementById('restore-step3').classList.add('hidden');
+  document.getElementById('restore-step4').classList.remove('hidden');
+  const log   = document.getElementById('log-restore');
+  const stats = document.getElementById('result-stats-restore');
+  log.innerHTML = ''; stats.innerHTML = '';
+
+  let novos = 0, atualizados = 0, erros = 0;
+  const addLog = (tipo, msg) => {
+    const span = document.createElement('span');
+    span.className = tipo; span.textContent = msg + '\n';
+    log.appendChild(span); log.scrollTop = log.scrollHeight;
+  };
+
+  async function upsert(chave, nomeCol) {
+    if (!dadosArquivo[chave]) return;
+    addLog('warn', `\n── ${nomeCol.toUpperCase()} ─────────────────`);
+    let batch = writeBatch(db); let ops = 0;
+    for (const row of dadosArquivo[chave]) {
+      const idRaw = String(row._id || '').trim();
+      const { _id, ...dados } = row;
+      Object.keys(dados).forEach(k => { if (dados[k] === '') delete dados[k]; });
+
+      // Normaliza data_criacao: aceita ISO ou "DD/MM/YYYY"
+      if (dados.data_criacao) {
+        const dc = String(dados.data_criacao).trim();
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dc)) {
+          const [dd, mm, yyyy] = dc.split('/');
+          dados.data_criacao = new Date(`${yyyy}-${mm}-${dd}T12:00:00.000Z`).toISOString();
+        }
+        // Se já for ISO string, mantém como está (string — Firebase aceita)
+      }
+
+      try {
+        if (idRaw) {
+          batch.set(doc(db, chave, idRaw), dados, { merge: true });
+          addLog('upd', `  🔄 ${idRaw.substring(0,14)}... atualizado`);
+          atualizados++;
+        } else {
+          const vals = Object.values(dados).filter(v => String(v).trim());
+          if (vals.length < 2) continue;
+          batch.set(doc(collection(db, chave)), dados);
+          addLog('ok', `  ✨ novo registro criado`);
+          novos++;
+        }
+        ops++;
+        if (ops >= 400) { await batch.commit(); batch = writeBatch(db); ops = 0; }
+      } catch(e) { addLog('err', `  ❌ ${e.message}`); erros++; }
+    }
+    if (ops > 0) await batch.commit();
+    addLog('ok', `  ✅ ${nomeCol} concluído`);
+  }
+
+  await upsert('clientes','Clientes');
+  await upsert('produtos','Produtos');
+  await upsert('pedidos','Pedidos');
+  await upsert('parcelas','Parcelas');
+  addLog('ok', `\n✅ Importação finalizada!`);
+
+  stats.innerHTML = `
+    <div class="stat"><div class="stat-val green">${novos}</div><div class="stat-label">Criados</div></div>
+    <div class="stat"><div class="stat-val blue">${atualizados}</div><div class="stat-label">Atualizados</div></div>
+    <div class="stat"><div class="stat-val ${erros > 0 ? 'red' : 'green'}">${erros}</div><div class="stat-label">Erros</div></div>`;
+};
+
+window.resetarUpload = function() {
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-selected').classList.remove('visible');
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('restore-step1').classList.remove('hidden');
+  document.getElementById('restore-step2').classList.add('hidden');
+  document.getElementById('restore-step3').classList.add('hidden');
+  dadosArquivo = {};
+};
+
+window.novaImportacao = function() {
+  resetarUpload();
+  document.getElementById('restore-step4').classList.add('hidden');
+};
+
+// ══════════════════════════════════════════════════════════
+// RESET TOTAL
+// ══════════════════════════════════════════════════════════
+window.validarReset = function() {
+  document.getElementById('btn-reset').disabled =
+    document.getElementById('confirm-reset').value.trim().toUpperCase() !== 'APAGAR TUDO';
+};
+
+window.executarReset = async function() {
+  const r = await Swal.fire({
+    title: '☠️ ÚLTIMA CONFIRMAÇÃO',
+    text: 'Isso vai apagar TODOS os dados permanentemente. Não há como desfazer.',
+    icon: 'warning', showCancelButton: true,
+    confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Sim, apagar tudo!', cancelButtonText: 'Cancelar'
+  });
+  if (!r.isConfirmed) return;
+
+  Swal.fire({ title: 'Apagando dados...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  for (const col of ['pedidos','clientes','produtos','parcelas','locks']) {
+    const snap = await getDocs(collection(db, col));
+    if (snap.empty) continue;
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  }
+  await setDoc(doc(db, 'configuracoes', 'contador_pedidos'), { ultimo_numero: 0 });
+
+  await Swal.fire({ icon: 'success', title: 'Sistema resetado!', timer: 2000, showConfirmButton: false });
+  window.location.href = 'index.html';
+};
+
+// ══════════════════════════════════════════════════════════
+// NAVEGAÇÃO DOS PAINÉIS
+// ══════════════════════════════════════════════════════════
+window.abrirPainel = function(id) {
+  document.querySelectorAll('.panel-wrap').forEach(p => p.classList.remove('visible'));
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('visible'); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (id === 'painel-config') carregarConfiguracoes();
+};
+
+window.fecharPainel = function(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('visible');
+};
+
+async function carregarConfiguracoes() {
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'frete'));
+    const msg = document.getElementById('cfg-msg');
+    if (snap.exists()) {
+      const d = snap.data();
+      document.getElementById('cfg-litro').value   = d.litro   ?? 4.20;
+      document.getElementById('cfg-consumo').value = d.consumo ?? 9.0;
+      if (msg) msg.innerHTML = '<span style="color:var(--muted)">✅ Configurações carregadas do banco.</span>';
+    } else {
+      document.getElementById('cfg-litro').value   = 4.20;
+      document.getElementById('cfg-consumo').value = 9.0;
+      if (msg) msg.innerHTML = '<span style="color:var(--muted)">ℹ️ Usando valores padrão (ainda não foram salvos).</span>';
+    }
+  } catch(e) { console.error('Erro ao carregar configs:', e); }
+}
+
+window.salvarConfiguracoes = async function() {
+  const litro   = parseFloat(document.getElementById('cfg-litro').value);
+  const consumo = parseFloat(document.getElementById('cfg-consumo').value);
+  const msg = document.getElementById('cfg-msg');
+  if (!litro || litro <= 0)   { if(msg) msg.innerHTML = '<span style="color:red">⚠️ Informe um preço de combustível válido.</span>'; return; }
+  if (!consumo || consumo <= 0) { if(msg) msg.innerHTML = '<span style="color:red">⚠️ Informe um consumo válido.</span>'; return; }
+  try {
+    await setDoc(doc(db, 'configuracoes', 'frete'), { litro, consumo });
+    if(msg) msg.innerHTML = '<span style="color:var(--accent2)">✅ Configurações salvas com sucesso!</span>';
+  } catch(e) {
+    if(msg) msg.innerHTML = '<span style="color:red">❌ Erro ao salvar: ' + e.message + '</span>';
+  }
+};
+
+// Drag & Drop no upload
+const zone = document.getElementById('upload-zone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) aoSelecionarArquivo({ target: { files: [file] } });
+  });
+}
+
+// Auto-registra o usuário na coleção usuarios ao acessar (para aparecer na lista)
+onAuthStateChanged(auth, async user => {
+  if (!user) return;
+  const ref = doc(db, 'usuarios', user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, { email: user.email, uid: user.uid, admin: false, criado_em: new Date().toISOString() });
+  } else if (!snap.data().email) {
+    await setDoc(ref, { email: user.email }, { merge: true });
+  }
+});
+</script>
+</body>
+</html>

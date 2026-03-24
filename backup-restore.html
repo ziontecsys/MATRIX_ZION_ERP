@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup & Restore — MPLEÃO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+  :root {
+    --bg:#0f1117;--surface:#181c27;--border:#2a2f3e;--accent:#3b7ff5;
+    --accent2:#22d3a5;--warn:#f59e0b;--danger:#ef4444;--text:#e2e8f0;--muted:#64748b;
+    --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;gap:16px;}
+  .logo{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--accent);}
+  .sep{color:var(--border);font-size:24px;}
+  .htitle{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .back-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;text-decoration:none;transition:all .15s;}
+  .back-btn:hover{color:var(--text);border-color:var(--muted);}
+  main{max-width:1100px;margin:0 auto;padding:32px;}
+
+  .tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:32px;}
+  .tab{flex:1;padding:18px 24px;display:flex;align-items:center;gap:12px;background:var(--surface);border-right:1px solid var(--border);cursor:pointer;transition:all .2s;opacity:.5;}
+  .tab:last-child{border-right:none;}
+  .tab.active{opacity:1;background:#1e2535;border-bottom:2px solid var(--accent);}
+  .tab-icon{font-size:22px;}
+  .tab-label{font-size:14px;font-weight:600;}
+  .tab-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:24px;}
+  .ptitle{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px;}
+  .pdesc{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+
+  .collections{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;}
+  .coll-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;display:flex;align-items:center;gap:12px;}
+  .coll-icon{font-size:22px;}
+  .coll-name{font-size:13px;font-weight:600;}
+  .coll-count{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--accent2);margin-top:2px;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:8px;border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#5590f7;transform:translateY(-1px);}
+  .btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-success{background:var(--accent2);color:#0f1117;}
+  .btn-success:hover{background:#34e8b8;transform:translateY(-1px);}
+  .btn-success:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-danger:hover{background:#f87171;transform:translateY(-1px);}
+  .btn-danger:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+  .btn-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+
+  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:48px 32px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+  .upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(59,127,245,.05);}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-icon{font-size:44px;margin-bottom:14px;}
+  .upload-title{font-size:17px;font-weight:600;margin-bottom:6px;}
+  .upload-sub{font-size:13px;color:var(--muted);}
+  .upload-selected{display:none;background:rgba(34,211,165,.08);border:1px solid rgba(34,211,165,.25);border-radius:8px;padding:14px 18px;margin-top:16px;align-items:center;gap:12px;}
+  .upload-selected.visible{display:flex;}
+  .fname{font-family:var(--mono);font-size:13px;color:var(--accent2);font-weight:600;}
+
+  .warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start;}
+  .warn-icon{font-size:22px;flex-shrink:0;margin-top:2px;}
+  .warn-title{font-size:13px;font-weight:700;color:var(--warn);margin-bottom:4px;}
+  .warn-text{font-size:13px;color:var(--muted);line-height:1.6;}
+
+  .danger-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start;}
+  .danger-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:4px;}
+
+  .steps-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+  .step-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .step-num{width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px;}
+
+  .progress-wrap{display:none;margin-top:20px;}
+  .progress-wrap.visible{display:block;}
+  .progress-bar-bg{background:var(--border);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px;}
+  .progress-bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .3s;}
+  .progress-label{font-size:12px;color:var(--muted);font-family:var(--mono);}
+
+  .stats-bar{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;}
+  .stat{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;}
+  .stat-val{font-family:var(--mono);font-size:20px;font-weight:600;}
+  .stat-val.green{color:var(--accent2);}
+  .stat-val.blue{color:var(--accent);}
+  .stat-val.warn{color:var(--warn);}
+  .stat-val.red{color:var(--danger);}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+  .log{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:12px;color:var(--muted);max-height:220px;overflow-y:auto;line-height:1.7;display:none;}
+  .log.visible{display:block;}
+  .log .ok{color:var(--accent2);}
+  .log .skip{color:var(--muted);}
+  .log .upd{color:var(--accent);}
+  .log .err{color:var(--danger);}
+  .log .warn{color:var(--warn);}
+
+  .confirm-input{background:var(--bg);border:1px solid var(--danger);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;width:100%;margin-top:10px;outline:none;}
+  .confirm-input:focus{border-color:var(--accent);}
+
+  .hidden{display:none!important;}
+  #section-restore{display:none;}
+
+  .sheet-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .sheet-pill{background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:12px;font-family:var(--mono);}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">MPLEÃO</span>
+  <span class="sep">/</span>
+  <span class="htitle">Backup &amp; Restore do Banco de Dados</span>
+  <a href="index.html" class="back-btn">← Voltar ao sistema</a>
+</header>
+
+<main>
+
+  <!-- ABAS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-backup" onclick="trocarAba('backup')">
+      <span class="tab-icon">💾</span>
+      <div>
+        <div class="tab-label">Exportar Backup</div>
+        <div class="tab-sub">Baixar Excel completo do banco</div>
+      </div>
+    </div>
+    <div class="tab" id="tab-restore" onclick="trocarAba('restore')">
+      <span class="tab-icon">🔄</span>
+      <div>
+        <div class="tab-label">Importar / Restaurar</div>
+        <div class="tab-sub">Atualizar banco a partir do Excel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SEÇÃO BACKUP ===================== -->
+  <div id="section-backup">
+
+    <div class="panel">
+      <div class="ptitle">📦 Exportar banco de dados completo</div>
+      <div class="pdesc">Gera um arquivo Excel com todas as coleções do banco de dados. Cada aba representa uma coleção. Use para criar backups periódicos ou para editar dados em massa antes de reimportar.</div>
+
+      <div class="collections" id="collections-info">
+        <div class="coll-card"><span class="coll-icon">👥</span><div><div class="coll-name">Clientes</div><div class="coll-count" id="cnt-clientes">—</div></div></div>
+        <div class="coll-card"><span class="coll-icon">📦</span><div><div class="coll-name">Produtos</div><div class="coll-count" id="cnt-produtos">—</div></div></div>
+        <div class="coll-card"><span class="coll-icon">📋</span><div><div class="coll-name">Pedidos</div><div class="coll-count" id="cnt-pedidos">—</div></div></div>
+        <div class="coll-card"><span class="coll-icon">💰</span><div><div class="coll-name">Parcelas</div><div class="coll-count" id="cnt-parcelas">—</div></div></div>
+      </div>
+
+      <div class="sheet-legend">
+        <span class="sheet-pill">📄 CLIENTES</span>
+        <span class="sheet-pill">📄 PRODUTOS</span>
+        <span class="sheet-pill">📄 PEDIDOS</span>
+        <span class="sheet-pill">📄 PARCELAS</span>
+        <span class="sheet-pill">📄 INSTRUÇÕES</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-success" id="btn-exportar" onclick="exportarBackup()" disabled>
+          ⏳ Carregando dados...
+        </button>
+      </div>
+
+      <div class="progress-wrap" id="prog-export">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-export-bar" style="width:0%"></div></div>
+        <div class="progress-label" id="prog-export-label">Preparando...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== SEÇÃO RESTORE ===================== -->
+  <div id="section-restore">
+
+    <!-- AVISO DE RISCO -->
+    <div class="danger-box">
+      <span class="warn-icon">🚨</span>
+      <div>
+        <div class="danger-title">ATENÇÃO — OPERAÇÃO DE ALTO RISCO</div>
+        <div class="warn-text">
+          A importação de backup pode <strong style="color:#f87171">sobrescrever dados existentes</strong> no banco de dados. Registros com o mesmo ID serão atualizados com os dados do arquivo.<br>
+          <strong style="color:#f87171">Faça um backup atualizado ANTES de importar.</strong> Erros nesta operação podem causar perda irreversível de dados.
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSO 1: Upload -->
+    <div class="panel" id="painel-upload">
+      <div class="ptitle">① Selecionar arquivo de backup</div>
+      <div class="pdesc">Selecione um arquivo Excel (.xlsx) exportado por esta ferramenta. O arquivo deve conter as abas: CLIENTES, PRODUTOS, PEDIDOS e/ou PARCELAS.</div>
+
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx" onchange="aoSelecionarArquivo(event)">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Arraste o arquivo aqui ou clique para selecionar</div>
+        <div class="upload-sub">Somente arquivos <strong>.xlsx</strong> exportados por esta ferramenta</div>
+      </div>
+      <div class="upload-selected" id="file-selected">
+        <span style="font-size:24px">✅</span>
+        <div>
+          <div class="fname" id="file-nome">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px" id="file-info">—</div>
+        </div>
+        <button class="btn btn-ghost" style="margin-left:auto;padding:6px 14px;font-size:12px" onclick="resetarUpload()">Trocar</button>
+      </div>
+    </div>
+
+    <!-- PASSO 2: Preview -->
+    <div class="panel hidden" id="painel-preview">
+      <div class="ptitle">② Resumo do arquivo</div>
+      <div class="pdesc">Confira o que será importado antes de prosseguir.</div>
+
+      <div class="stats-bar" id="preview-stats"></div>
+
+      <div class="warn-box">
+        <span class="warn-icon">ℹ️</span>
+        <div>
+          <div class="warn-title">Como funciona o upsert</div>
+          <div class="warn-text">
+            <strong style="color:var(--accent2)">✨ Novo</strong> — registro não existe no banco → será criado<br>
+            <strong style="color:var(--accent)">🔄 Atualizar</strong> — registro já existe (mesmo ID) → dados serão atualizados<br>
+            <strong style="color:var(--muted)">— Sem ID</strong> — linhas sem ID na coluna <code>_id</code> são ignoradas
+          </div>
+        </div>
+      </div>
+
+      <div id="preview-detalhes"></div>
+
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-ghost" onclick="resetarUpload()">← Voltar</button>
+        <button class="btn btn-primary" onclick="mostrarConfirmacao()">Prosseguir com importação →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 3: Confirmação -->
+    <div class="panel hidden" id="painel-confirmacao">
+      <div class="ptitle">③ Confirmar importação</div>
+
+      <div class="danger-box">
+        <span class="warn-icon">⚠️</span>
+        <div>
+          <div class="danger-title">Esta ação irá modificar o banco de dados em produção.</div>
+          <div class="warn-text">Para confirmar, digite <strong style="color:#f87171">IMPORTAR</strong> no campo abaixo e clique em executar.</div>
+        </div>
+      </div>
+
+      <div id="resumo-confirmacao" style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.8"></div>
+
+      <input type="text" class="confirm-input" id="confirm-input" placeholder='Digite IMPORTAR para confirmar' oninput="validarConfirmacao()">
+
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-ghost" onclick="voltarParaPreview()">← Voltar</button>
+        <button class="btn btn-danger" id="btn-executar" onclick="executarImportacao()" disabled>🔄 Executar Importação</button>
+      </div>
+    </div>
+
+    <!-- PASSO 4: Resultado -->
+    <div class="panel hidden" id="painel-resultado">
+      <div class="ptitle">④ Resultado da importação</div>
+
+      <div class="stats-bar" id="result-stats"></div>
+
+      <div class="log visible" id="log-importacao"></div>
+
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-primary" onclick="window.location.href='index.html'">🏠 Voltar ao sistema</button>
+        <button class="btn btn-ghost" onclick="novaImportacao()">↩️ Nova importação</button>
+      </div>
+    </div>
+
+  </div><!-- /section-restore -->
+
+</main>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore, collection, getDocs, doc, setDoc, writeBatch, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac",
+  authDomain: "mpleaoerp.firebaseapp.com",
+  projectId: "mpleaoerp"
+});
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── Auth Guard ──────────────────────────────────────────
+onAuthStateChanged(auth, user => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  document.body.style.visibility = 'visible';
+  carregarContagens();
+});
+document.body.style.visibility = 'hidden';
+
+// ── Dados carregados do Firebase ────────────────────────
+let dadosDB = { clientes:[], produtos:[], pedidos:[], parcelas:[] };
+let dadosArquivo = {};
+
+async function carregarContagens() {
+  const cols = ['clientes','produtos','pedidos','parcelas'];
+  const ids  = ['cnt-clientes','cnt-produtos','cnt-pedidos','cnt-parcelas'];
+  for (let i = 0; i < cols.length; i++) {
+    const snap = await getDocs(collection(db, cols[i]));
+    dadosDB[cols[i]] = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+    document.getElementById(ids[i]).textContent = snap.size;
+  }
+  const btn = document.getElementById('btn-exportar');
+  btn.disabled = false;
+  btn.textContent = '💾 Exportar Backup Excel';
+  btn.innerHTML = '💾 Exportar Backup Excel';
+}
+
+// ══════════════════════════════════════════════════════════
+// EXPORTAÇÃO
+// ══════════════════════════════════════════════════════════
+window.exportarBackup = async function() {
+  const btn = document.getElementById('btn-exportar');
+  const prog = document.getElementById('prog-export');
+  const bar  = document.getElementById('prog-export-bar');
+  const lbl  = document.getElementById('prog-export-label');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Gerando arquivo...';
+  prog.classList.add('visible');
+
+  const wb = XLSX.utils.book_new();
+
+  const cols = [
+    { key:'clientes', nome:'CLIENTES', campos: ['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes','data_cadastro'] },
+    { key:'produtos', nome:'PRODUTOS', campos: ['_id','codigo','codigo_fornecedor','descricao','categoria','cor','fornecedor','unidade','marca','valor_base','custo','estoque_atual','estoque_minimo','observacoes','data_cadastro'] },
+    { key:'pedidos',  nome:'PEDIDOS',  campos: ['_id','numero_sequencial','status','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','data_criacao'] },
+    { key:'parcelas', nome:'PARCELAS', campos: ['_id','pedidoId','clienteNome','valor','vencimento','status','descricao','data_pagamento'] },
+  ];
+
+  for (let i = 0; i < cols.length; i++) {
+    const c = cols[i];
+    bar.style.width = ((i / cols.length) * 90) + '%';
+    lbl.textContent = `Processando ${c.nome}...`;
+
+    const rows = dadosDB[c.key].map(doc => {
+      const row = {};
+      c.campos.forEach(campo => {
+        let val = doc[campo];
+        if (val && typeof val === 'object' && val.seconds) {
+          val = new Date(val.seconds * 1000).toLocaleDateString('pt-BR');
+        } else if (val && typeof val === 'object') {
+          val = JSON.stringify(val);
+        }
+        row[campo] = val ?? '';
+      });
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [Object.fromEntries(c.campos.map(f => [f, '']))]);
+
+    // Cabeçalho em negrito (via estilo básico)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: col })];
+      if (cell) cell.s = { font: { bold: true } };
+    }
+
+    // Larguras de coluna automáticas
+    ws['!cols'] = c.campos.map(f => ({ wch: Math.max(f.length + 2, 14) }));
+
+    XLSX.utils.book_append_sheet(wb, ws, c.nome);
+    await new Promise(r => setTimeout(r, 10));
+  }
+
+  // Aba de instruções
+  const instrucoes = [
+    ['INSTRUÇÕES DE USO DO BACKUP MPLEÃO'],
+    [''],
+    ['EXPORTAÇÃO'],
+    ['• Este arquivo foi gerado automaticamente pela ferramenta de Backup & Restore do MPLEÃO ERP'],
+    ['• Cada aba representa uma coleção do banco de dados'],
+    ['• A coluna _id é o identificador único de cada registro no Firebase — NÃO altere esses valores'],
+    [''],
+    ['IMPORTAÇÃO / RESTAURAÇÃO'],
+    ['• Para reimportar, acesse a ferramenta e selecione este arquivo'],
+    ['• Registros com _id existente no banco serão ATUALIZADOS com os dados deste arquivo'],
+    ['• Linhas sem _id serão IGNORADAS na importação'],
+    ['• Para ADICIONAR novos registros, deixe a coluna _id em branco e preencha os demais campos'],
+    ['  O sistema gerará um novo ID automaticamente para esses registros'],
+    [''],
+    ['CAMPOS IMPORTANTES'],
+    ['• Clientes: código deve ser único (ex: 0001, 0002...)'],
+    ['• Produtos: codigo_fornecedor + codigo devem ser únicos'],
+    ['• Pedidos: numero_sequencial é o número visível no sistema'],
+    ['• Parcelas: pedidoId vincula a parcela ao pedido'],
+    [''],
+    ['⚠️  ATENÇÃO: Nunca edite a coluna _id. Alterar um _id existente criará um registro duplicado.'],
+  ];
+  const wsInstr = XLSX.utils.aoa_to_sheet(instrucoes);
+  wsInstr['!cols'] = [{ wch: 90 }];
+  XLSX.utils.book_append_sheet(wb, wsInstr, 'INSTRUÇÕES');
+
+  bar.style.width = '100%';
+  lbl.textContent = 'Finalizando...';
+  await new Promise(r => setTimeout(r, 200));
+
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+  XLSX.writeFile(wb, `MPLEAO_Backup_${stamp}.xlsx`);
+
+  btn.disabled = false;
+  btn.textContent = '✅ Backup gerado! Exportar novamente';
+  lbl.textContent = 'Arquivo gerado com sucesso!';
+};
+
+// ══════════════════════════════════════════════════════════
+// IMPORTAÇÃO
+// ══════════════════════════════════════════════════════════
+window.aoSelecionarArquivo = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      dadosArquivo = {};
+
+      const mapa = { 'CLIENTES':'clientes','PRODUTOS':'produtos','PEDIDOS':'pedidos','PARCELAS':'parcelas' };
+      for (const [aba, chave] of Object.entries(mapa)) {
+        if (wb.SheetNames.includes(aba)) {
+          dadosArquivo[chave] = XLSX.utils.sheet_to_json(wb.Sheets[aba], { defval: '' });
+        }
+      }
+
+      document.getElementById('file-nome').textContent = file.name;
+      document.getElementById('file-info').textContent = `${(file.size/1024).toFixed(1)} KB · ${Object.keys(dadosArquivo).length} coleção(ões) encontradas`;
+      document.getElementById('file-selected').classList.add('visible');
+      document.getElementById('upload-zone').style.display = 'none';
+
+      montarPreview();
+    } catch(err) {
+      alert('Erro ao ler arquivo: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+function montarPreview() {
+  const statsEl = document.getElementById('preview-stats');
+  const detEl   = document.getElementById('preview-detalhes');
+  statsEl.innerHTML = '';
+  detEl.innerHTML   = '';
+
+  let totalNovos = 0, totalAtuais = 0;
+
+  const ordens = [
+    { key:'clientes', icon:'👥', label:'Clientes' },
+    { key:'produtos', icon:'📦', label:'Produtos' },
+    { key:'pedidos',  icon:'📋', label:'Pedidos' },
+    { key:'parcelas', icon:'💰', label:'Parcelas' },
+  ];
+
+  for (const { key, icon, label } of ordens) {
+    if (!dadosArquivo[key]) continue;
+    const linhas = dadosArquivo[key].filter(r => String(r._id||'').trim() !== '');
+    const semId  = dadosArquivo[key].filter(r => String(r._id||'').trim() === '');
+    const idsDB  = new Set(dadosDB[key].map(r => r._id));
+
+    let novos = 0, atualiza = 0;
+    linhas.forEach(r => idsDB.has(String(r._id)) ? atualiza++ : novos++);
+    // Sem ID mas com dados relevantes = novos a criar
+    const novosSemId = semId.filter(r => {
+      const vals = Object.values(r).filter(v => String(v).trim() !== '');
+      return vals.length > 1;
+    }).length;
+    novos += novosSemId;
+    totalNovos += novos; totalAtuais += atualiza;
+
+    statsEl.innerHTML += `
+      <div class="stat">
+        <div class="stat-val blue">${icon} ${linhas.length + novosSemId}</div>
+        <div class="stat-label">${label}</div>
+      </div>`;
+
+    detEl.innerHTML += `
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:10px;font-size:13px;">
+        <strong>${icon} ${label}</strong>
+        <span style="color:var(--accent2);margin-left:16px">✨ ${novos} novos</span>
+        <span style="color:var(--accent);margin-left:12px">🔄 ${atualiza} a atualizar</span>
+        ${semId.length - novosSemId > 0 ? `<span style="color:var(--muted);margin-left:12px">— ${semId.length - novosSemId} linhas vazias ignoradas</span>` : ''}
+      </div>`;
+  }
+
+  document.getElementById('painel-upload').classList.add('hidden');
+  document.getElementById('painel-preview').classList.remove('hidden');
+}
+
+window.mostrarConfirmacao = function() {
+  // Monta resumo
+  let html = '';
+  const ordens = [
+    { key:'clientes', icon:'👥', label:'Clientes' },
+    { key:'produtos', icon:'📦', label:'Produtos' },
+    { key:'pedidos',  icon:'📋', label:'Pedidos' },
+    { key:'parcelas', icon:'💰', label:'Parcelas' },
+  ];
+  for (const { key, icon, label } of ordens) {
+    if (!dadosArquivo[key]) continue;
+    html += `${icon} <strong>${label}:</strong> ${dadosArquivo[key].length} registro(s)<br>`;
+  }
+  document.getElementById('resumo-confirmacao').innerHTML = html;
+  document.getElementById('confirm-input').value = '';
+  document.getElementById('btn-executar').disabled = true;
+
+  document.getElementById('painel-preview').classList.add('hidden');
+  document.getElementById('painel-confirmacao').classList.remove('hidden');
+};
+
+window.validarConfirmacao = function() {
+  const val = document.getElementById('confirm-input').value.trim().toUpperCase();
+  document.getElementById('btn-executar').disabled = val !== 'IMPORTAR';
+};
+
+window.voltarParaPreview = function() {
+  document.getElementById('painel-confirmacao').classList.add('hidden');
+  document.getElementById('painel-preview').classList.remove('hidden');
+};
+
+window.executarImportacao = async function() {
+  const btn = document.getElementById('btn-executar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Importando...';
+
+  document.getElementById('painel-confirmacao').classList.add('hidden');
+  document.getElementById('painel-resultado').classList.remove('hidden');
+
+  const log   = document.getElementById('log-importacao');
+  const stats = document.getElementById('result-stats');
+  log.innerHTML = '';
+  stats.innerHTML = '';
+
+  let totalNovos = 0, totalAtualizados = 0, totalErros = 0;
+
+  function addLog(tipo, msg) {
+    const span = document.createElement('span');
+    span.className = tipo;
+    span.textContent = msg + '\n';
+    log.appendChild(span);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const BATCH_SIZE = 400; // Firestore limita 500 por batch
+
+  async function upsertColecao(chave, nomeCol) {
+    if (!dadosArquivo[chave]) return;
+    addLog('warn', `\n── ${nomeCol.toUpperCase()} ──────────────────`);
+
+    const registros = dadosArquivo[chave];
+    let batch = writeBatch(db);
+    let ops = 0;
+
+    for (const row of registros) {
+      const idRaw = String(row._id || '').trim();
+      // Remove campo _id dos dados a salvar
+      const { _id, ...dados } = row;
+
+      // Limpa campos vazios
+      Object.keys(dados).forEach(k => { if (dados[k] === '') delete dados[k]; });
+
+      try {
+        if (idRaw) {
+          // Upsert por ID existente
+          const ref = doc(db, chave, idRaw);
+          batch.set(ref, dados, { merge: true });
+          addLog('upd', `  🔄 ${nomeCol} ${idRaw.substring(0,12)}... → atualizado`);
+          totalAtualizados++;
+        } else {
+          // Sem ID — só cria se tiver dados relevantes
+          const vals = Object.values(dados).filter(v => String(v).trim() !== '');
+          if (vals.length < 2) { addLog('skip', `  — linha vazia ignorada`); continue; }
+          const ref = doc(collection(db, chave));
+          batch.set(ref, { ...dados, data_importacao: new Date().toISOString() });
+          addLog('ok', `  ✨ ${nomeCol} novo → criado`);
+          totalNovos++;
+        }
+
+        ops++;
+        if (ops >= BATCH_SIZE) {
+          await batch.commit();
+          batch = writeBatch(db);
+          ops = 0;
+          addLog('skip', `  [batch commitado — continuando...]`);
+        }
+      } catch(e) {
+        addLog('err', `  ❌ Erro em ${idRaw}: ${e.message}`);
+        totalErros++;
+      }
+    }
+
+    if (ops > 0) await batch.commit();
+    addLog('ok', `  ✅ ${nomeCol} concluído`);
+  }
+
+  await upsertColecao('clientes', 'Clientes');
+  await upsertColecao('produtos', 'Produtos');
+  await upsertColecao('pedidos',  'Pedidos');
+  await upsertColecao('parcelas', 'Parcelas');
+
+  addLog('ok', `\n✅ Importação finalizada!`);
+
+  stats.innerHTML = `
+    <div class="stat"><div class="stat-val green">${totalNovos}</div><div class="stat-label">Criados</div></div>
+    <div class="stat"><div class="stat-val blue">${totalAtualizados}</div><div class="stat-label">Atualizados</div></div>
+    <div class="stat"><div class="stat-val ${totalErros > 0 ? 'red' : 'green'}">${totalErros}</div><div class="stat-label">Erros</div></div>
+  `;
+};
+
+// ══════════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ══════════════════════════════════════════════════════════
+window.trocarAba = function(aba) {
+  document.getElementById('tab-backup').classList.toggle('active', aba === 'backup');
+  document.getElementById('tab-restore').classList.toggle('active', aba === 'restore');
+  document.getElementById('section-backup').style.display  = aba === 'backup'  ? 'block' : 'none';
+  document.getElementById('section-restore').style.display = aba === 'restore' ? 'block' : 'none';
+};
+
+window.resetarUpload = function() {
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-selected').classList.remove('visible');
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('painel-upload').classList.remove('hidden');
+  document.getElementById('painel-preview').classList.add('hidden');
+  document.getElementById('painel-confirmacao').classList.add('hidden');
+  dadosArquivo = {};
+};
+
+window.novaImportacao = function() {
+  resetarUpload();
+  document.getElementById('painel-resultado').classList.add('hidden');
+};
+
+// Drag & Drop
+const zone = document.getElementById('upload-zone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) { document.getElementById('file-input').files = e.dataTransfer.files; aoSelecionarArquivo({ target: { files: [file] } }); }
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Acesso ao Sistema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen overflow-hidden">
+
+    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-4">
+        
+<div class="text-center mb-8">
+    <div class="inline-block bg-gray-900 p-2 rounded-full mb-3 shadow-md border-2 border-yellow-500/20">
+        <img src="logo-mpleao.png" alt="Logo MPLEÃO" class="w-24 h-24 object-contain block mx-auto">
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800">MPLEÃO Gestão</h1>
+    <p class="text-sm text-gray-500 mt-1">Acesso restrito a colaboradores</p>
+</div>
+
+        <form id="form-login" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                <input type="email" id="email" required placeholder="ex: oswaldo@mpleao.com.br" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                <input type="password" id="senha" required placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition">
+            </div>
+
+            <button type="submit" id="btn-login" class="w-full bg-gray-900 text-yellow-500 font-bold text-lg py-3 rounded-lg hover:bg-gray-800 transition shadow-md">
+                Entrar no Sistema
+            </button>
+        </form>
+
+        <div id="msg-erro" class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm text-center">
+        </div>
+
+        <div class="mt-8 text-center border-t border-gray-200 pt-4">
+            <p class="text-xs text-gray-500 flex items-center justify-center gap-1">
+                Powered by <span class="font-bold text-gray-800">Jairo Rossi</span> 
+                <span class="text-yellow-500 mx-1">|</span> 
+                <span class="font-bold text-blue-700">Morpheus</span>
+            </p>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Importa as funções oficiais do Firebase direto do Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+// Suas chaves (Atualizadas para Matrix Zion ERP)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
+            authDomain: "matrix-zion-erp.firebaseapp.com",
+            projectId: "matrix-zion-erp",
+            storageBucket: "matrix-zion-erp.firebasestorage.app",
+            messagingSenderId: "904407462438",
+            appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
+            measurementId: "G-PS30HSRHGP"
+        };
+
+        // Inicializa o Firebase e o Autenticador
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Lógica de quando clicar em "Entrar"
+        const formLogin = document.getElementById('form-login');
+        const btnLogin = document.getElementById('btn-login');
+        const msgErro = document.getElementById('msg-erro');
+
+        formLogin.addEventListener('submit', (e) => {
+            e.preventDefault(); // Evita recarregar a tela
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            // Muda o visual do botão
+            btnLogin.innerHTML = 'Autenticando...';
+            btnLogin.classList.add('opacity-75');
+            msgErro.classList.add('hidden');
+
+            // Tenta fazer o login no Firebase
+            // browserSessionPersistence: token do Firebase é apagado ao fechar o navegador
+            setPersistence(auth, browserSessionPersistence)
+                .then(() => signInWithEmailAndPassword(auth, email, senha))
+                .then((userCredential) => {
+                    // Cria tabId e flags de sessão para esta aba
+                    const tabId = Date.now().toString();
+                    sessionStorage.setItem('tabId', tabId);
+                    sessionStorage.setItem('userLogged', 'true');
+                    sessionStorage.setItem('sessaoAtiva_' + tabId, 'true');
+                    window.location.href = 'dashboard.html';
+                })
+                .catch((error) => {
+                    btnLogin.innerHTML = 'Entrar no Sistema';
+                    btnLogin.classList.remove('opacity-75');
+                    msgErro.innerText = "E-mail ou senha incorretos.";
+                    msgErro.classList.remove('hidden');
+                });
+        });
+    </script>
+</body>
+</html>

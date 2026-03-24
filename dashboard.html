@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — MPLEÃO ERP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #d4a017;
+            --gold-light: #f0c040;
+            --dark: #0f0f0f;
+            --dark-2: #1a1a1a;
+            --dark-3: #242424;
+            --dark-4: #2e2e2e;
+            --text: #f0f0f0;
+            --muted: #888;
+            --border: rgba(255,255,255,0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+            visibility: hidden;
+        }
+        h1, h2, h3, .font-display { font-family: 'Syne', sans-serif; }
+
+        /* ── LAYOUT ── */
+        .layout { display: flex; min-height: 100vh; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: var(--dark-2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+        }
+        .sidebar-logo {
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-logo .brand {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--gold-light);
+            letter-spacing: .04em;
+        }
+        .sidebar-logo .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+        .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-radius: 8px;
+            font-size: 13px; font-weight: 500; color: var(--muted);
+            text-decoration: none; transition: all .15s;
+            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-item:hover { background: var(--dark-3); color: var(--text); }
+        .nav-item.active { background: rgba(212,160,23,.12); color: var(--gold-light); }
+        .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+        .nav-section { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; padding: 16px 14px 6px; }
+        .sidebar-footer {
+            padding: 16px 12px;
+            border-top: 1px solid var(--border);
+        }
+        .user-pill {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 8px;
+            background: var(--dark-3);
+        }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), #b8860b);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: var(--dark); flex-shrink: 0;
+        }
+        .user-info .name { font-size: 12px; font-weight: 600; color: var(--text); }
+        .user-info .role { font-size: 10px; color: var(--muted); }
+
+        /* ── MAIN ── */
+        .main { margin-left: 240px; flex: 1; padding: 32px 36px; min-height: 100vh; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 32px;
+        }
+        .topbar-left .greeting { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; }
+        .topbar-left .greeting span { color: var(--gold-light); }
+        .topbar-left .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .date-badge {
+            background: var(--dark-2); border: 1px solid var(--border);
+            padding: 8px 16px; border-radius: 8px;
+            font-size: 12px; color: var(--muted);
+        }
+
+        /* ── STAT CARDS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--dark-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: transform .2s, border-color .2s;
+            cursor: default;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.15); }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent-color, var(--gold));
+        }
+        .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.stat-value { font-family: 'DM Sans', sans-serif; font-size: 34px; font-weight: 700; line-height: 1; margin-bottom: 6px; letter-spacing: -0.5px; font-variant-numeric: tabular-nums;}
+        .stat-sub { font-size: 11px; color: var(--muted); }
+        .stat-icon { position: absolute; top: 16px; right: 18px; font-size: 22px; opacity: .25; }
+
+        /* ── MIDDLE ROW ── */
+        .mid-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+        /* ── BOTTOM ROW ── */
+        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--dark-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 14px; font-weight: 700;
+            margin-bottom: 20px; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-title .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--gold-light);
+        }
+
+        /* ── STATUS LIST ── */
+        .status-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .status-row:last-child { border-bottom: none; }
+        .status-row .label { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .status-row .count { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+        .status-row .bar-wrap { flex: 1; margin: 0 14px; height: 4px; background: var(--dark-4); border-radius: 99px; overflow: hidden; }
+        .status-row .bar { height: 100%; border-radius: 99px; transition: width 1s ease; }
+
+        /* ── FINANCEIRO ── */
+        .fin-box {
+            background: var(--dark-3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-bottom: 10px;
+        }
+        .fin-box:last-child { margin-bottom: 0; }
+        .fin-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.fin-value { 
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums;
+}
+
+        /* ── ÚLTIMOS PEDIDOS ── */
+        .pedido-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .pedido-row:last-child { border-bottom: none; }
+        .pedido-num { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--gold-light); width: 40px; flex-shrink: 0; }
+        .pedido-cliente { flex: 1; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .pedido-valor { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+        .badge-status {
+            font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+            white-space: nowrap;
+        }
+
+        /* ── QUICK ACTIONS ── */
+        .quick-btn {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 16px; border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--dark-3);
+            color: var(--text); text-decoration: none;
+            font-size: 13px; font-weight: 500;
+            transition: all .15s; cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .quick-btn:last-child { margin-bottom: 0; }
+        .quick-btn:hover { background: var(--dark-4); border-color: rgba(255,255,255,.15); transform: translateX(3px); }
+        .quick-btn .q-icon { font-size: 18px; }
+        .quick-btn .q-arrow { margin-left: auto; color: var(--muted); font-size: 16px; }
+
+        /* ── CHART ── */
+        .chart-wrap { position: relative; height: 200px; }
+
+        /* ── PARCELAS VENCENDO ── */
+        .parc-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 0; border-bottom: 1px solid var(--border);
+        }
+        .parc-row:last-child { border-bottom: none; }
+        .parc-nome { flex: 1; font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .parc-valor { font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .parc-venc { font-size: 11px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+
+        /* ── EMPTY STATE ── */
+        .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 0; }
+
+        /* ── LOADING PULSE ── */
+        .pulse { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .mid-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main { margin-left: 0; padding: 20px 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .mid-grid, .bottom-grid { grid-template-columns: 1fr; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+
+        /* ── ANIMAÇÃO ENTRADA ── */
+        .fade-in { opacity: 0; transform: translateY(12px); animation: fadeUp .4s ease forwards; }
+        @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+        .fade-in:nth-child(1){animation-delay:.05s}
+        .fade-in:nth-child(2){animation-delay:.1s}
+        .fade-in:nth-child(3){animation-delay:.15s}
+        .fade-in:nth-child(4){animation-delay:.2s}
+    </style>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="brand">⚡ MPLEÃO</div>
+            <div class="sub">Sistema de Gestão</div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">Principal</div>
+            <a href="dashboard.html" class="nav-item active">
+                <span class="icon">📊</span> Dashboard
+            </a>
+            <a href="index.html" class="nav-item">
+                <span class="icon">📦</span> Sistema
+            </a>
+
+            <div class="nav-section" style="margin-top:8px">Administração</div>
+            <a href="admin.html" class="nav-item">
+                <span class="icon">🔐</span> Admin
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-pill">
+                <div class="user-avatar" id="user-avatar-letter">?</div>
+                <div class="user-info">
+                    <div class="name" id="sidebar-user-name">Carregando...</div>
+                    <div class="role" id="sidebar-user-role">Usuário</div>
+                </div>
+            </div>
+            <button onclick="fazerLogout()" style="
+                margin-top:8px; width:100%; padding:9px; border-radius:8px;
+                border:1px solid rgba(239,68,68,.2); background:rgba(239,68,68,.06);
+                color:#f87171; font-size:12px; font-weight:600; cursor:pointer;
+                transition:background .15s;
+            " onmouseover="this.style.background='rgba(239,68,68,.12)'" onmouseout="this.style.background='rgba(239,68,68,.06)'">
+                🚪 Encerrar Sessão
+            </button>
+        </div>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <main class="main">
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="greeting">Olá, <span id="user-display-name">...</span> 👋</div>
+                <div class="sub" id="current-date">Carregando data...</div>
+            </div>
+            <div class="date-badge" id="hora-atual">--:--</div>
+        </div>
+
+        <!-- KPIs principais -->
+        <div class="stats-grid">
+            <div class="stat-card fade-in" style="--accent-color:#f59e0b">
+                <div class="stat-label">Orçamentos</div>
+                <div class="stat-value" id="kpi-orcamento"><span class="pulse">-</span></div>
+                <div class="stat-sub">aguardando aprovação</div>
+                <div class="stat-icon">📋</div>
+            </div>
+            <div class="stat-card fade-in" style="--accent-color:#3b82f6">
+                <div class="stat-label">Em Produção</div>
+                <div class="stat-value" id="kpi-producao"><span class="pulse">-</span></div>
+                <div class="stat-sub">em andamento</div>
+                <div class="stat-icon">🔧</div>
+            </div>
+            <div class="stat-card fade-in" style="--accent-color:#f97316">
+                <div class="stat-label">Em Entrega</div>
+                <div class="stat-value" id="kpi-entrega"><span class="pulse">-</span></div>
+                <div class="stat-sub">saiu para entrega</div>
+                <div class="stat-icon">🚚</div>
+            </div>
+            <div class="stat-card fade-in" style="--accent-color:#10b981">
+                <div class="stat-label">Entregues</div>
+                <div class="stat-value" id="kpi-entregue"><span class="pulse">-</span></div>
+                <div class="stat-sub">concluídos</div>
+                <div class="stat-icon">✅</div>
+            </div>
+        </div>
+
+        <!-- Linha do meio: status detalhado + financeiro + cadastros -->
+        <div class="mid-grid">
+
+            <!-- Status completo -->
+            <div class="card">
+                <div class="card-title"><div class="dot"></div>Todos os Status</div>
+                <div id="status-list">
+                    <div class="empty pulse">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Financeiro -->
+            <div class="card">
+                <div class="card-title"><div class="dot"></div>Financeiro</div>
+                <div class="fin-box" style="border-left:3px solid #3b82f6">
+                    <div class="fin-label" style="color:#60a5fa">💰 Total a Receber</div>
+                    <div class="fin-value" id="fin-receber">R$ -</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px"><span id="fin-qtd-pendente">-</span> parcelas pendentes</div>
+                </div>
+                <div class="fin-box" style="border-left:3px solid #f59e0b">
+                    <div class="fin-label" style="color:#fbbf24">⏰ Vence Hoje</div>
+                    <div class="fin-value" id="fin-hoje">R$ -</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px"><span id="fin-qtd-hoje">-</span> parcela(s)</div>
+                </div>
+                <div class="fin-box" style="border-left:3px solid #ef4444">
+                    <div class="fin-label" style="color:#f87171">🔴 Em Atraso</div>
+                    <div class="fin-value" id="fin-atraso">R$ -</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px"><span id="fin-qtd-atraso">-</span> parcela(s)</div>
+                </div>
+            </div>
+
+            <!-- Cadastros + gráfico -->
+            <div class="card">
+                <div class="card-title"><div class="dot"></div>Cadastros</div>
+                <div style="display:flex;gap:12px;margin-bottom:20px;">
+                    <div style="flex:1;background:var(--dark-3);border-radius:9px;padding:14px;text-align:center;">
+                        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">👥Clientes</div>
+                        <div style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" id="cad-clientes">-</div>
+                    </div>
+                    <div style="flex:1;background:var(--dark-3);border-radius:9px;padding:14px;text-align:center;">
+                        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">📦Produtos</div>
+                        <div style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" id="cad-produtos">-</div>
+                    </div>
+                    <div style="flex:1;background:var(--dark-3);border-radius:9px;padding:14px;text-align:center;">
+                        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">📋Pedidos</div>
+                        <div style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" id="cad-pedidos">-</div>
+                    </div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartPedidos"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Linha inferior: últimos pedidos + parcelas vencendo + ações rápidas -->
+        <div class="bottom-grid">
+
+            <!-- Últimos pedidos -->
+            <div class="card">
+                <div class="card-title"><div class="dot"></div>Últimos Pedidos</div>
+                <div id="ultimos-pedidos">
+                    <div class="empty pulse">Carregando...</div>
+                </div>
+                <a href="index.html" style="
+                    display:block;text-align:center;margin-top:16px;padding:9px;
+                    border:1px solid var(--border);border-radius:8px;
+                    font-size:12px;font-weight:600;color:var(--muted);
+                    text-decoration:none;transition:all .15s;
+                " onmouseover="this.style.color='var(--text)';this.style.borderColor='rgba(255,255,255,.2)'"
+                   onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">
+                    Ver todos os pedidos →
+                </a>
+            </div>
+
+            <!-- Parcelas vencendo + ações rápidas -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+
+                <div class="card" style="flex:1">
+                    <div class="card-title"><div class="dot"></div>Parcelas Próximas (7 dias)</div>
+                    <div id="parcelas-proximas">
+                        <div class="empty pulse">Carregando...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><div class="dot"></div>Acesso Rápido</div>
+                    <a href="index.html" class="quick-btn">
+                        <span class="q-icon">➕</span>
+                        <span>Novo Pedido</span>
+                        <span class="q-arrow">›</span>
+                    </a>
+                    <!-- <a href="index.html#clientes" class="quick-btn">
+                        <span class="q-icon">👥</span>
+                        <span>Cadastrar Cliente</span>
+                        <span class="q-arrow">›</span>
+                    </a>
+                    <a href="index.html#financeiro" class="quick-btn">
+                        <span class="q-icon">💰</span>
+                        <span>Contas a Receber</span>
+                        <span class="q-arrow">›</span>
+                    </a> -->
+                    <a href="admin.html" class="quick-btn">
+                        <span class="q-icon">⚙️</span>
+                        <span>Administração</span>
+                        <span class="q-arrow">›</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// ATUALIZE NO DASHBOARD COM AS CHAVES DO MATRIX ZION ERP
+const app = initializeApp({
+    apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
+    authDomain: "matrix-zion-erp.firebaseapp.com",
+    projectId: "matrix-zion-erp",
+    storageBucket: "matrix-zion-erp.firebasestorage.app",
+    messagingSenderId: "904407462438",
+    appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
+    measurementId: "G-PS30HSRHGP"
+});
+
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const fmt = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+
+// Relógio
+function atualizarHora() {
+    const el = document.getElementById('hora-atual');
+    if (el) el.textContent = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+}
+atualizarHora();
+setInterval(atualizarHora, 10000);
+
+// Data
+document.getElementById('current-date').textContent =
+    new Date().toLocaleDateString('pt-BR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+window.fazerLogout = async function() {
+    await signOut(auth);
+    window.location.href = 'login.html';
+};
+
+const STATUS_CONFIG = {
+    'Orçamento':              { cor: '#f59e0b', emoji: '📋' },
+    'Produção':               { cor: '#3b82f6', emoji: '🔧' },
+    'Em Entrega':             { cor: '#f97316', emoji: '🚚' },
+    'Entregue':               { cor: '#10b981', emoji: '✅' },
+    'Pedido Cancelado':       { cor: '#ef4444', emoji: '❌' },
+    'Orçamento Não Aprovado': { cor: '#8b5cf6', emoji: '🚫' },
+};
+
+const BADGE_STYLE = {
+    'Orçamento':              'background:rgba(245,158,11,.15);color:#fbbf24',
+    'Produção':               'background:rgba(59,130,246,.15);color:#60a5fa',
+    'Em Entrega':             'background:rgba(249,115,22,.15);color:#fb923c',
+    'Entregue':               'background:rgba(16,185,129,.15);color:#34d399',
+    'Pedido Cancelado':       'background:rgba(239,68,68,.15);color:#f87171',
+    'Orçamento Não Aprovado': 'background:rgba(139,92,246,.15);color:#a78bfa',
+};
+
+onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    // Usuário
+    const nome = user.displayName || user.email.split('@')[0];
+    document.getElementById('user-display-name').textContent = nome;
+    document.getElementById('sidebar-user-name').textContent = nome;
+    document.getElementById('user-avatar-letter').textContent = nome[0].toUpperCase();
+
+    // Verifica se é admin
+    try {
+        const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+        const isAdmin = userDoc.exists() && userDoc.data().admin === true;
+        document.getElementById('sidebar-user-role').textContent = isAdmin ? '🔐 Administrador' : '👤 Usuário';
+    } catch(e) {}
+
+    document.body.style.visibility = 'visible';
+
+    // ── CARREGAR DADOS ──
+    const [pSnap, cSnap, prSnap, paSnap] = await Promise.all([
+        getDocs(collection(db, 'pedidos')),
+        getDocs(collection(db, 'clientes')),
+        getDocs(collection(db, 'produtos')),
+        getDocs(collection(db, 'parcelas')),
+    ]);
+
+    const pedidos  = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const parcelas = paSnap.docs.map(d => d.data());
+
+    // ── KPIs ──
+    const counts = {};
+    Object.keys(STATUS_CONFIG).forEach(s => counts[s] = pedidos.filter(p => p.status === s).length);
+
+    document.getElementById('kpi-orcamento').textContent = counts['Orçamento'];
+    document.getElementById('kpi-producao').textContent  = counts['Produção'];
+    document.getElementById('kpi-entrega').textContent   = counts['Em Entrega'];
+    document.getElementById('kpi-entregue').textContent  = counts['Entregue'];
+    document.getElementById('cad-clientes').textContent  = cSnap.size;
+    document.getElementById('cad-produtos').textContent  = prSnap.size;
+    document.getElementById('cad-pedidos').textContent   = pedidos.length;
+
+    // ── STATUS LIST ──
+    const total = pedidos.length || 1;
+    const listEl = document.getElementById('status-list');
+    listEl.innerHTML = Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
+        const n = counts[status] || 0;
+        const pct = Math.round((n / total) * 100);
+        return `<div class="status-row">
+            <div class="label">
+                <div class="status-dot" style="background:${cfg.cor}"></div>
+                <span style="font-size:13px">${cfg.emoji} ${status}</span>
+            </div>
+            <div class="bar-wrap"><div class="bar" style="width:${pct}%;background:${cfg.cor}"></div></div>
+            <div class="count" style="color:${cfg.cor}">${n}</div>
+        </div>`;
+    }).join('');
+
+    // ── FINANCEIRO ──
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const em7  = new Date(hoje); em7.setDate(hoje.getDate() + 7);
+
+    let totalReceber = 0, totalHoje = 0, totalAtraso = 0;
+    let qtdPend = 0, qtdHoje = 0, qtdAtraso = 0;
+
+    parcelas.forEach(p => {
+        if (p.status !== 'pendente') return;
+        const val = parseFloat(p.valor) || 0;
+        const venc = new Date(p.vencimento + 'T00:00:00');
+        totalReceber += val; qtdPend++;
+        if (venc.getTime() === hoje.getTime()) { totalHoje += val; qtdHoje++; }
+        if (venc < hoje) { totalAtraso += val; qtdAtraso++; }
+    });
+
+    document.getElementById('fin-receber').textContent     = fmt(totalReceber);
+    document.getElementById('fin-qtd-pendente').textContent = qtdPend;
+    document.getElementById('fin-hoje').textContent        = fmt(totalHoje);
+    document.getElementById('fin-qtd-hoje').textContent    = qtdHoje;
+    document.getElementById('fin-atraso').textContent      = fmt(totalAtraso);
+    document.getElementById('fin-qtd-atraso').textContent  = qtdAtraso;
+
+    // ── GRÁFICO DONUT ──
+    const ctx = document.getElementById('chartPedidos').getContext('2d');
+    const labels = Object.keys(STATUS_CONFIG).filter(s => counts[s] > 0);
+    const data   = labels.map(s => counts[s]);
+    const colors = labels.map(s => STATUS_CONFIG[s].cor);
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#888', font: { size: 11 }, boxWidth: 10, padding: 10 }
+                }
+            }
+        }
+    });
+
+    // ── ÚLTIMOS PEDIDOS ──
+    const ultimos = [...pedidos]
+        .sort((a, b) => {
+            const ts = d => d?.seconds ? d.seconds * 1000 : new Date(d || 0).getTime();
+            return ts(b.data_criacao) - ts(a.data_criacao);
+        })
+        .slice(0, 6);
+
+    const ulEl = document.getElementById('ultimos-pedidos');
+    if (ultimos.length === 0) {
+        ulEl.innerHTML = '<div class="empty">Nenhum pedido encontrado</div>';
+    } else {
+        ulEl.innerHTML = ultimos.map(p => {
+            const num = p.numero_sequencial ? `#${String(p.numero_sequencial).padStart(3,'0')}` : '#---';
+            const badge = BADGE_STYLE[p.status] || 'background:rgba(255,255,255,.1);color:#ccc';
+            return `<div class="pedido-row">
+                <div class="pedido-num">${num}</div>
+                <div class="pedido-cliente">${p.cliente_nome || '—'}</div>
+                <span class="badge-status" style="${badge}">${p.status}</span>
+                <div class="pedido-valor">${fmt(p.valor_total || 0)}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // ── PARCELAS PRÓXIMAS (7 dias) ──
+    const proximas = parcelas
+        .filter(p => {
+            if (p.status !== 'pendente') return false;
+            const venc = new Date(p.vencimento + 'T00:00:00');
+            return venc >= hoje && venc <= em7;
+        })
+        .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
+        .slice(0, 5);
+
+    const paEl = document.getElementById('parcelas-proximas');
+    if (proximas.length === 0) {
+        paEl.innerHTML = '<div class="empty">✅ Nenhuma parcela vencendo nos próximos 7 dias</div>';
+    } else {
+        paEl.innerHTML = proximas.map(p => {
+            const venc = new Date(p.vencimento + 'T00:00:00');
+            const isHoje = venc.getTime() === hoje.getTime();
+            const diffDias = Math.round((venc - hoje) / 86400000);
+            const vencLabel = isHoje ? 'Hoje' : `em ${diffDias}d`;
+            const vencStyle = isHoje
+                ? 'background:rgba(245,158,11,.2);color:#fbbf24'
+                : 'background:rgba(255,255,255,.06);color:var(--muted)';
+            return `<div class="parc-row">
+                <div class="parc-nome">${p.clienteNome || '—'}</div>
+                <div class="parc-valor">${fmt(parseFloat(p.valor)||0)}</div>
+                <div class="parc-venc" style="${vencStyle}">${vencLabel}</div>
+            </div>`;
+        }).join('');
+    }
+});
+</script>
+</body>
+</html>

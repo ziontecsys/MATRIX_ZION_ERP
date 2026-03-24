@@ -1,0 +1,7 @@
+/* ==========================================
+   tailwind.css - Import do Tailwind
+   ========================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
