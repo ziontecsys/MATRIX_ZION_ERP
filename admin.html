@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Admin — MPLEÃO</title>
+<title>Painel Admin — Matrix ERP</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
@@ -116,7 +116,7 @@
 <body>
 
 <header>
-  <span class="logo">MPLEÃO</span>
+  <span class="logo">Matrix ERP</span>
   <span class="admin-badge">🔐 Admin</span>
   <span class="user-info" id="user-email">—</span>
   <a href="index.html" class="back-btn">← Voltar ao sistema</a>
@@ -583,7 +583,7 @@ window.exportarBackup = async function() {
 
   // Instruções
   const wsI = XLSX.utils.aoa_to_sheet([
-    ['BACKUP MPLEÃO ERP — INSTRUÇÕES'],[''],
+    ['BACKUP Matrix ERP ERP — INSTRUÇÕES'],[''],
     ['• A coluna _id é o identificador único no Firebase — NÃO altere'],
     ['• Registros com _id existente serão ATUALIZADOS na importação'],
     ['• Linhas sem _id com dados serão CRIADAS como novos registros'],

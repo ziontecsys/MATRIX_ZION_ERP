@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Importar Produtos — MPLEÃO</title>
+<title>Importar Produtos — Matrix ERP</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
@@ -104,7 +104,7 @@
 <body>
 
 <header>
-  <span class="logo">MPLEÃO</span>
+  <span class="logo">Matrix ERP</span>
   <span class="sep">/</span>
   <span class="htitle">Importador de Produtos</span>
 </header>
@@ -138,7 +138,7 @@
         <input type="file" id="file-input" accept=".xlsx,.xls" onchange="arquivoSelecionado(this)">
         <div class="upload-icon">📂</div>
         <div class="upload-title">Clique aqui ou arraste o arquivo</div>
-        <div class="upload-sub">Aceita <strong>.xlsx</strong> — use apenas a planilha modelo MPLEÃO</div>
+        <div class="upload-sub">Aceita <strong>.xlsx</strong> — use apenas a planilha modelo Matrix ERP</div>
       </div>
       <div class="upload-selected" id="upload-selected">
         <span style="font-size:24px;">📄</span>
@@ -298,7 +298,7 @@ async function processarArquivo(){
     for(let i=0;i<Math.min(linhas.length,10);i++){
       if(linhas[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('codigo_fornecedor'))){ linhaH=i; break; }
     }
-    if(linhaH===-1){ alert('Planilha inválida: cabeçalho não encontrado.\nUse apenas a planilha modelo MPLEÃO.'); btn.disabled=false; btn.textContent='🔍 Processar Arquivo'; return; }
+    if(linhaH===-1){ alert('Planilha inválida: cabeçalho não encontrado.\nUse apenas a planilha modelo Matrix ERP.'); btn.disabled=false; btn.textContent='🔍 Processar Arquivo'; return; }
 
     // Mapeia colunas
     const headerRow=linhas[linhaH].map(c=>String(c).trim());

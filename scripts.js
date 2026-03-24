@@ -1,5 +1,5 @@
 // ==========================================
-// scripts.js - Funções globais do MPLEÃO
+// scripts.js - Funções globais do Matrix ERP
 // ==========================================
 
 let modalProdutosFiltrados = [];
@@ -772,7 +772,7 @@ if (condicaoPagamento) {
         <div style="padding:30px;font-family:Arial,sans-serif;color:#333;max-width:800px;margin:0 auto;">
             <div style="display:flex;justify-content:space-between;border-bottom:2px solid #999;padding-bottom:12px;margin-bottom:20px;">
                 <div>
-                    <h1 style="margin:0;font-size:26px;letter-spacing:-0.5px;">MPLEÃO</h1>
+                    <h1 style="margin:0;font-size:26px;letter-spacing:-0.5px;">Matrix ERP</h1>
                     <p style="margin:2px 0 0 0;font-size:11px;color:#666;">Esquadrias de aço e alumínio</p>
                 </div>
                 <div style="text-align:right;">
@@ -810,7 +810,7 @@ if (condicaoPagamento) {
             </div>
 
             <div style="margin-top:60px;display:flex;justify-content:space-between;">
-                <div style="width:40%;border-top:1px solid #999;text-align:center;padding-top:8px;font-size:11px;color:#666;">Assinatura MPLEÃO</div>
+                <div style="width:40%;border-top:1px solid #999;text-align:center;padding-top:8px;font-size:11px;color:#666;">Assinatura Matrix ERP</div>
                 <div style="width:40%;border-top:1px solid #999;text-align:center;padding-top:8px;font-size:11px;color:#666;">Assinatura do Cliente</div>
             </div>
         </div>
