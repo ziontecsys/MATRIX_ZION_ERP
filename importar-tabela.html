@@ -222,19 +222,21 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore, collection, addDoc, updateDoc, doc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const app = initializeApp({ apiKey:"AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac", authDomain:"mpleaoerp.firebaseapp.com", projectId:"mpleaoerp" });
+const _cfg = { apiKey:"AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc", authDomain:"matrix-zion-erp.firebaseapp.com", projectId:"matrix-zion-erp", storageBucket:"matrix-zion-erp.firebasestorage.app", messagingSenderId:"904407462438", appId:"1:904407462438:web:6eae08ec0ca69d46eaece7" };
+const app = getApps().length ? getApp() : initializeApp(_cfg);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Redireciona para login se não estiver autenticado
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.replace('login.html');
-  } else {
-    // Libera a UI somente após confirmar autenticação
-    document.getElementById('section-upload').style.display = 'block';
-    document.getElementById('loading-auth').style.display = 'none';
-  }
+// Garante persistência local antes de verificar sessão
+setPersistence(auth, browserLocalPersistence).then(() => {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.replace('login.html');
+    } else {
+      document.getElementById('section-upload').style.display = 'block';
+      document.getElementById('loading-auth').style.display = 'none';
+    }
+  });
 });
 
 window._db=db; window._col=collection; window._add=addDoc; window._upd=updateDoc; window._doc=doc; window._ts=serverTimestamp;
@@ -253,7 +255,7 @@ let arquivoXLSX=null, produtosParsed=[], selecionados=new Set(), mapaExistentes=
 
 const COLUNAS={'codigo_fornecedor *':'codigo_fornecedor','descricao *':'descricao','valor_venda *':'valor_venda','categoria':'categoria','cor':'cor','fornecedor':'fornecedor','unidade':'unidade','custo':'custo','marca':'marca','estoque_inicial':'estoque_inicial','observacoes':'observacoes'};
 
-function baixarModelo(){ const a=document.createElement('a'); a.href='modelo_importacao_mpleao.xlsx'; a.download='modelo_importacao_mpleao.xlsx'; a.click(); }
+function baixarModelo(){ const a=document.createElement('a'); a.href='modelo_importacao_matrix.xlsx'; a.download='modelo_importacao_matrix.xlsx'; a.click(); }
 
 // Drag & drop
 const zone=document.getElementById('upload-zone');

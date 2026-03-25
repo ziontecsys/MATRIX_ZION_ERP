@@ -116,10 +116,10 @@
 <body>
 
 <header>
-  <span class="logo">Matrix ERP</span>
+  <span class="logo">Matrix <span style="color:#3b82f6">ERP</span></span>
   <span class="admin-badge">🔐 Admin</span>
   <span class="user-info" id="user-email">—</span>
-  <a href="index.html" class="back-btn">← Voltar ao sistema</a>
+  <a href="index.html" class="back-btn">← Voltar ao Matrix ERP</a>
 </header>
 
 <!-- Acesso negado -->
@@ -127,7 +127,7 @@
   <div class="icon">🚫</div>
   <h2>Acesso negado</h2>
   <p>Você não tem permissão para acessar o painel administrativo.<br>Entre em contato com o administrador do sistema.</p>
-  <a href="index.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao sistema</a>
+  <a href="index.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao Matrix ERP</a>
 </div>
 
 <main id="main-admin">
@@ -353,6 +353,46 @@
             style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface); color:var(--muted);">
         </div>
       </div>
+
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text);">📦 Controle de Estoque</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          <b>Ativado:</b> bloqueia seleção de produtos sem estoque e impede estoque negativo.<br>
+          <b>Desativado:</b> permite pedidos com qualquer produto, estoque pode ficar negativo — ideal para trabalho sob encomenda.
+        </div>
+        <label style="display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;">
+          <div style="position:relative;width:48px;height:26px;flex-shrink:0;" onclick="document.getElementById('cfg-controle-estoque').click()">
+            <input type="checkbox" id="cfg-controle-estoque" style="opacity:0;width:0;height:0;position:absolute;"
+              onchange="atualizarToggleEstoque(this.checked)">
+            <div id="toggle-track" style="position:absolute;inset:0;border-radius:99px;background:#3b3b3b;border:1px solid rgba(255,255,255,.1);transition:background .2s;"></div>
+            <div id="toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#888;transition:all .2s;"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);" id="cfg-estoque-label">Carregando...</div>
+            <div style="font-size:11px;color:var(--muted);" id="cfg-estoque-sub"></div>
+          </div>
+        </label>
+      </div>
+
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text);">🔢 Contador de Pedidos</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          O próximo pedido criado receberá o número <b id="cfg-proximo-numero">...</b>. 
+          Use para corrigir quando o contador estiver desalinhado com os pedidos reais.
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;max-width:320px;">
+          <div style="flex:1;">
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Redefinir último número para:</label>
+            <input type="number" id="cfg-contador-valor" min="0" step="1" placeholder="ex: 5"
+              style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);">
+          </div>
+          <div style="padding-top:18px;">
+            <button onclick="redefinirContador()" class="btn btn-primary" style="padding:9px 16px;font-size:13px;">Aplicar</button>
+          </div>
+        </div>
+        <div id="cfg-contador-msg" style="margin-top:8px;font-size:12px;min-height:16px;"></div>
+      </div>
+
       <div id="cfg-msg" style="margin-top:12px;font-size:13px;min-height:20px;"></div>
       <div class="btn-row" style="margin-top:20px;">
         <button class="btn btn-ghost" onclick="fecharPainel('painel-config')">Fechar</button>
@@ -365,23 +405,22 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const app = initializeApp({
-    apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
-    authDomain: "matrix-zion-erp.firebaseapp.com",
-    projectId: "matrix-zion-erp",
-    storageBucket: "matrix-zion-erp.firebasestorage.app",
-    messagingSenderId: "904407462438",
-    appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
-    measurementId: "G-PS30HSRHGP"
+  apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
+  authDomain: "matrix-zion-erp.firebaseapp.com",
+  projectId: "matrix-zion-erp",
+  storageBucket: "matrix-zion-erp.firebasestorage.app",
+  messagingSenderId: "904407462438",
+  appId: "1:904407462438:web:6eae08ec0ca69d46eaece7"
 });
-
 const auth = getAuth(app);
 const db   = getFirestore(app);
+await setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
 let dadosDB = { clientes:[], produtos:[], pedidos:[], parcelas:[] };
 let dadosArquivo = {};
@@ -531,7 +570,7 @@ window.criarUsuario = async function() {
     const { getAuth: getAuth2, createUserWithEmailAndPassword, signOut: signOut2 } =
       await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     let appSec;
-    try { appSec = getApp('sec'); } catch { appSec = initializeApp({ apiKey:"AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac", authDomain:"mpleaoerp.firebaseapp.com", projectId:"mpleaoerp" }, 'sec'); }
+    try { appSec = getApp('sec'); } catch { appSec = initializeApp({ apiKey:"AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc", authDomain:"matrix-zion-erp.firebaseapp.com", projectId:"matrix-zion-erp" }, 'sec'); }
     const authSec = getAuth2(appSec);
     const cred = await createUserWithEmailAndPassword(authSec, email, senha);
     await setDoc(doc(db, 'usuarios', cred.user.uid), { email, admin: isAdm, criado_em: new Date().toISOString(), criado_por: usuarioAtual?.email || '' });
@@ -562,7 +601,7 @@ window.exportarBackup = async function() {
   const cols = [
     { key:'clientes', nome:'CLIENTES', campos:['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes','data_cadastro'] },
     { key:'produtos',  nome:'PRODUTOS', campos:['_id','codigo','codigo_fornecedor','descricao','categoria','cor','fornecedor','unidade','marca','valor_base','custo','estoque_atual','estoque_minimo','observacoes','data_cadastro'] },
-    { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','data_criacao'] },
+    { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','frete_valor_total','data_criacao'] },
     { key:'parcelas',  nome:'PARCELAS', campos:['_id','numeroPedido','pedidoId','clienteNome','clienteCodigo','clienteId','valor','vencimento','status','numeroParcela','totalParcelas','dataCriacao','dataPagamento'] },
   ];
 
@@ -588,7 +627,7 @@ window.exportarBackup = async function() {
 
   // Instruções
   const wsI = XLSX.utils.aoa_to_sheet([
-    ['BACKUP Matrix ERP ERP — INSTRUÇÕES'],[''],
+    ['BACKUP Matrix ERP — INSTRUÇÕES'],[''],
     ['• A coluna _id é o identificador único no Firebase — NÃO altere'],
     ['• Registros com _id existente serão ATUALIZADOS na importação'],
     ['• Linhas sem _id com dados serão CRIADAS como novos registros'],
@@ -600,7 +639,7 @@ window.exportarBackup = async function() {
   bar.style.width = '100%'; lbl.textContent = 'Pronto!';
   const now = new Date();
   const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-  XLSX.writeFile(wb, `MPLEAO_Backup_${stamp}.xlsx`);
+  XLSX.writeFile(wb, `MatrixERP_Backup_${stamp}.xlsx`);
   btn.disabled = false; btn.innerHTML = '✅ Backup gerado! Exportar novamente';
 };
 
@@ -808,10 +847,13 @@ window.fecharPainel = function(id) {
 
 async function carregarConfiguracoes() {
   try {
-    const snap = await getDoc(doc(db, 'configuracoes', 'frete'));
     const msg = document.getElementById('cfg-msg');
-    if (snap.exists()) {
-      const d = snap.data();
+    const snapFrete   = await getDoc(doc(db, 'configuracoes', 'frete'));
+    const snapSistema = await getDoc(doc(db, 'configuracoes', 'sistema'));
+    const snapContador = await getDoc(doc(db, 'configuracoes', 'contador_pedidos'));
+
+    if (snapFrete.exists()) {
+      const d = snapFrete.data();
       document.getElementById('cfg-litro').value   = d.litro   ?? 4.20;
       document.getElementById('cfg-consumo').value = d.consumo ?? 9.0;
       if (msg) msg.innerHTML = '<span style="color:var(--muted)">✅ Configurações carregadas do banco.</span>';
@@ -820,17 +862,66 @@ async function carregarConfiguracoes() {
       document.getElementById('cfg-consumo').value = 9.0;
       if (msg) msg.innerHTML = '<span style="color:var(--muted)">ℹ️ Usando valores padrão (ainda não foram salvos).</span>';
     }
+
+    // Toggle de estoque
+    const controleAtivo = snapSistema.exists() ? (snapSistema.data().controle_estoque ?? false) : false;
+    const chk = document.getElementById('cfg-controle-estoque');
+    if (chk) chk.checked = controleAtivo;
+    atualizarToggleEstoque(controleAtivo);
+
+    // Contador de pedidos
+    const ultimoNum = snapContador.exists() ? (snapContador.data().ultimo_numero ?? 0) : 0;
+    const proximo = document.getElementById('cfg-proximo-numero');
+    if (proximo) proximo.textContent = `#${String(ultimoNum + 1).padStart(3, '0')}`;
+    const inputContador = document.getElementById('cfg-contador-valor');
+    if (inputContador) inputContador.value = ultimoNum;
+
   } catch(e) { console.error('Erro ao carregar configs:', e); }
 }
+
+window.redefinirContador = async function() {
+  const val = parseInt(document.getElementById('cfg-contador-valor')?.value);
+  const msg = document.getElementById('cfg-contador-msg');
+  if (isNaN(val) || val < 0) { if(msg) msg.innerHTML = '<span style="color:red">⚠️ Informe um número válido (0 ou maior).</span>'; return; }
+  const r = await Swal.fire({
+    title: '🔢 Redefinir contador?',
+    html: `O próximo pedido será <b>#${String(val + 1).padStart(3,'0')}</b>.<br><span style="font-size:12px;color:#9ca3af">Certifique-se que não há pedidos com número maior que ${val}.</span>`,
+    icon: 'warning', showCancelButton: true,
+    confirmButtonColor: '#3b7ff5', cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar'
+  });
+  if (!r.isConfirmed) return;
+  try {
+    await setDoc(doc(db, 'configuracoes', 'contador_pedidos'), { ultimo_numero: val });
+    const proximo = document.getElementById('cfg-proximo-numero');
+    if (proximo) proximo.textContent = `#${String(val + 1).padStart(3, '0')}`;
+    if(msg) msg.innerHTML = `<span style="color:var(--accent2)">✅ Contador redefinido! Próximo pedido: #${String(val+1).padStart(3,'0')}</span>`;
+  } catch(e) {
+    if(msg) msg.innerHTML = `<span style="color:red">❌ Erro: ${e.message}</span>`;
+  }
+};
+
+window.atualizarToggleEstoque = function(ativo) {
+  const track = document.getElementById('toggle-track');
+  const thumb = document.getElementById('toggle-thumb');
+  const label = document.getElementById('cfg-estoque-label');
+  const sub   = document.getElementById('cfg-estoque-sub');
+  if (track) track.style.background = ativo ? '#16a34a' : '#3b3b3b';
+  if (thumb) { thumb.style.left = ativo ? '27px' : '3px'; thumb.style.background = ativo ? '#fff' : '#888'; }
+  if (label) label.textContent = ativo ? 'Ativado — controle normal de estoque' : 'Desativado — trabalho sob encomenda';
+  if (sub)   sub.textContent   = ativo ? 'Bloqueia produtos sem estoque' : 'Estoque pode ficar negativo';
+};
 
 window.salvarConfiguracoes = async function() {
   const litro   = parseFloat(document.getElementById('cfg-litro').value);
   const consumo = parseFloat(document.getElementById('cfg-consumo').value);
+  const controleEstoque = document.getElementById('cfg-controle-estoque')?.checked ?? false;
   const msg = document.getElementById('cfg-msg');
-  if (!litro || litro <= 0)   { if(msg) msg.innerHTML = '<span style="color:red">⚠️ Informe um preço de combustível válido.</span>'; return; }
+  if (!litro || litro <= 0)     { if(msg) msg.innerHTML = '<span style="color:red">⚠️ Informe um preço de combustível válido.</span>'; return; }
   if (!consumo || consumo <= 0) { if(msg) msg.innerHTML = '<span style="color:red">⚠️ Informe um consumo válido.</span>'; return; }
   try {
-    await setDoc(doc(db, 'configuracoes', 'frete'), { litro, consumo });
+    await setDoc(doc(db, 'configuracoes', 'frete'),   { litro, consumo });
+    await setDoc(doc(db, 'configuracoes', 'sistema'), { controle_estoque: controleEstoque });
     if(msg) msg.innerHTML = '<span style="color:var(--accent2)">✅ Configurações salvas com sucesso!</span>';
   } catch(e) {
     if(msg) msg.innerHTML = '<span style="color:red">❌ Erro ao salvar: ' + e.message + '</span>';

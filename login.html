@@ -73,7 +73,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
@@ -101,7 +101,7 @@
             btnLogin.classList.add('opacity-50', 'cursor-not-allowed');
             msgErro.classList.add('hidden');
 
-            setPersistence(auth, browserSessionPersistence)
+            setPersistence(auth, browserLocalPersistence)
                 .then(() => signInWithEmailAndPassword(auth, email, senha))
                 .then((userCredential) => {
                     const tabId = Date.now().toString();

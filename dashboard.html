@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — Matrix ERP ERP</title>
+    <title>Matrix ERP | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --gold: #d4a017;
-            --gold-light: #f0c040;
-            --dark: #0f0f0f;
-            --dark-2: #1a1a1a;
-            --dark-3: #242424;
-            --dark-4: #2e2e2e;
+            --gold: #2563eb;
+            --gold-light: #60a5fa;
+            --dark: #05070a;
+            --dark-2: #0d1017;
+            --dark-3: #111827;
+            --dark-4: #1e2533;
             --text: #f0f0f0;
             --muted: #888;
-            --border: rgba(255,255,255,0.08);
+            --border: rgba(59,130,246,0.12);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -66,7 +66,7 @@
             cursor: pointer; border: none; background: none; width: 100%; text-align: left;
         }
         .nav-item:hover { background: var(--dark-3); color: var(--text); }
-        .nav-item.active { background: rgba(212,160,23,.12); color: var(--gold-light); }
+        .nav-item.active { background: rgba(59,130,246,.12); color: var(--gold-light); }
         .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
         .nav-section { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; padding: 16px 14px 6px; }
         .sidebar-footer {
@@ -80,7 +80,7 @@
         }
         .user-avatar {
             width: 32px; height: 32px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--gold), #b8860b);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             display: flex; align-items: center; justify-content: center;
             font-size: 13px; font-weight: 700; color: var(--dark); flex-shrink: 0;
         }
@@ -269,8 +269,8 @@
     <!-- ══ SIDEBAR ══ -->
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <div class="brand">⚡ Matrix ERP</div>
-            <div class="sub">Sistema de Gestão</div>
+            <div class="brand">⚡ Matrix <span style="color:#3b82f6">ERP</span></div>
+            <div class="sub" style="color:#3b82f6;font-size:10px;letter-spacing:.1em;">ZION TECNOLOGIA</div>
         </div>
 
         <nav class="sidebar-nav">
@@ -464,10 +464,9 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// ATUALIZE NO DASHBOARD COM AS CHAVES DO MATRIX ZION ERP
 const app = initializeApp({
     apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
     authDomain: "matrix-zion-erp.firebaseapp.com",
@@ -477,7 +476,6 @@ const app = initializeApp({
     appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
     measurementId: "G-PS30HSRHGP"
 });
-
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -494,6 +492,8 @@ setInterval(atualizarHora, 10000);
 // Data
 document.getElementById('current-date').textContent =
     new Date().toLocaleDateString('pt-BR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+await setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
 window.fazerLogout = async function() {
     await signOut(auth);

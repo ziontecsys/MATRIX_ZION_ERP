@@ -6,19 +6,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, getDoc, doc, updateDoc, deleteDoc, runTransaction, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-
-// ATUALIZE APENAS ESTE BLOCO NO SEU FIREBASE.JS
 const firebaseConfig = {
     apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
     authDomain: "matrix-zion-erp.firebaseapp.com",
     projectId: "matrix-zion-erp",
-    storageBucket: "matrix-zion-erp.firebasestorage.app", // Note que mudou para .app no novo SDK
+    storageBucket: "matrix-zion-erp.firebasestorage.app",
     messagingSenderId: "904407462438",
     appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
     measurementId: "G-PS30HSRHGP"
 };
-// FIM DADOS - BANCO DE DADOS CLINTE 
-
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -1576,7 +1572,7 @@ window.exportarBackupRapido = async function() {
         const colsDef = [
             { key:'clientes', nome:'CLIENTES', campos:['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes'] },
             { key:'produtos',  nome:'PRODUTOS', campos:['_id','codigo','codigo_fornecedor','descricao','categoria','fornecedor','unidade','valor_base','custo','estoque_atual'] },
-            { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','valor_total','condicao_pagamento','frete_km','frete_pedagio','data_criacao'] },
+            { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','valor_total','condicao_pagamento','data_criacao'] },
             { key:'parcelas',  nome:'PARCELAS', campos:['_id','numeroPedido','pedidoId','clienteNome','clienteCodigo','clienteId','valor','vencimento','status','numeroParcela','totalParcelas','dataCriacao','dataPagamento'] },
         ];
         const bancos = { clientes: window.bancoClientes, produtos: window.bancoProdutos, pedidos: window.bancoPedidos };
@@ -1616,7 +1612,7 @@ window.exportarBackupRapido = async function() {
 
         const now = new Date();
         const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-        window.XLSX.writeFile(wb, `MPLEAO_Backup_${stamp}.xlsx`);
+        window.XLSX.writeFile(wb, `MatrixERP_Backup_${stamp}.xlsx`);
         Swal.fire({ icon: 'success', title: 'Backup gerado!', timer: 2000, showConfirmButton: false });
     } catch(e) {
         console.error('Erro no backup:', e);
@@ -1766,12 +1762,17 @@ async function salvarPedidoAtual() {
 
     // Calcula valor total
     let subtotal = itens.reduce((s, it) => s + (it.quantidade * it.valor_unitario), 0);
-    const km     = parseFloat(document.getElementById('input-km')?.value) || 0;
-    const litro  = parseFloat(document.getElementById('input-litro')?.value?.replace(',','.')) || 0;
-    const consumo= parseFloat(document.getElementById('input-consumo')?.value?.replace(',','.')) || 1;
-    const pedag  = parseFloat(document.getElementById('input-pedagio')?.value?.replace(',','.')) || 0;
-    const frete  = consumo > 0 ? ((km / consumo) * litro * 2) + pedag : 0;
-    const valorTotal = subtotal + frete - desconto + acrescimo;
+    const km      = parseFloat(document.getElementById('input-km')?.value) || 0;
+    const litro   = parseFloat(document.getElementById('input-litro')?.value?.replace(',','.')) || 4.20;
+    const consumo = parseFloat(document.getElementById('input-consumo')?.value?.replace(',','.')) || 9.0;
+    const pedag   = parseFloat(document.getElementById('input-pedagio')?.value?.replace(',','.')) || 0;
+    
+    // Custo real em Reais
+    const custoCombustivel = km > 0 ? (km / consumo) * litro * 2 : 0;
+    const valorFreteTotal  = custoCombustivel + pedag;
+    
+    const valorTotal = subtotal + valorFreteTotal - desconto + acrescimo;
+
 
     if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Salvando...'; }
 
@@ -1797,6 +1798,7 @@ async function salvarPedidoAtual() {
             forma_pagamento:       document.getElementById('select-pagamento')?.value || '',
             frete_km:              km,
             frete_pedagio:         pedag,
+			frete_valor_total:     valorFreteTotal, // NOVO CAMPO
         };
 
         // Movimentação de estoque

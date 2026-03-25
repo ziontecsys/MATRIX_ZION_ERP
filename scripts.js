@@ -573,31 +573,33 @@ function calcularTudo() {
     const km = parseFloat(document.getElementById('input-km')?.value) || 0;
     const litro = parseFloat(document.getElementById('input-litro')?.value) || 4.20;
     const consumo = parseFloat(document.getElementById('input-consumo')?.value) || 9.0;
-    const custoCombustivel = km > 0 ? (km / consumo) * litro : 0;
+    
+    // CÁLCULO DO FRETE (KM / CONSUMO * PREÇO * 2 para ida e volta)
+    const custoCombustivel = km > 0 ? (km / consumo) * litro * 2 : 0;
     const pedagio = parseFloat((document.getElementById('input-pedagio')?.value || '0').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-    const frete = custoCombustivel + pedagio;
+    const freteTotal = custoCombustivel + pedagio;
 
     const el = (id) => document.getElementById(id);
     if (el('custo-combustivel')) el('custo-combustivel').innerText = formatarValorReais(custoCombustivel);
     if (el('custo-pedagio')) el('custo-pedagio').innerText = formatarValorReais(pedagio);
-    if (el('custo-total-frete')) el('custo-total-frete').innerText = formatarValorReais(frete);
-    if (el('display-frete-estimado')) el('display-frete-estimado').value = formatarValorReais(frete);
+    if (el('custo-total-frete')) el('custo-total-frete').innerText = formatarValorReais(freteTotal);
+    if (el('display-frete-estimado')) el('display-frete-estimado').value = formatarValorReais(freteTotal);
 
     const formaPgto = el('select-pagamento')?.value;
     let taxaCartao = 0;
     if (formaPgto === 'Cartão de Crédito') {
-        taxaCartao = (subtotalComDesconto + frete + acrescimo) * 0.05;
+        taxaCartao = (subtotalComDesconto + freteTotal + acrescimo) * 0.05;
         if (el('info-taxa')) { el('info-taxa').innerText = `Taxa Maquininha (5%): ${formatarValorReais(taxaCartao)}`; el('info-taxa').classList.remove('hidden'); }
     } else if (el('info-taxa')) {
         el('info-taxa').classList.add('hidden');
     }
 
-    const totalGeral = subtotalComDesconto + frete + taxaCartao + acrescimo;
+    const totalGeral = subtotalComDesconto + freteTotal + taxaCartao + acrescimo;
 
     if (el('display-subtotal')) el('display-subtotal').innerText = 'Subtotal: ' + formatarValorReais(subtotal);
     if (el('display-desconto')) el('display-desconto').innerText = 'Desconto: - ' + formatarValorReais(valorDesconto);
     if (el('display-acrescimo')) el('display-acrescimo').innerText = 'Acréscimo: + ' + formatarValorReais(acrescimo);
-    if (el('display-frete-final')) el('display-frete-final').innerText = 'Frete: ' + formatarValorReais(frete);
+    if (el('display-frete-final')) el('display-frete-final').innerText = 'Frete: ' + formatarValorReais(freteTotal);
     if (el('display-taxa-final')) {
         if (taxaCartao > 0) { el('display-taxa-final').innerText = 'Taxa Cartão: ' + formatarValorReais(taxaCartao); el('display-taxa-final').classList.remove('hidden'); }
         else el('display-taxa-final').classList.add('hidden');
