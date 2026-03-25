@@ -1572,7 +1572,7 @@ window.exportarBackupRapido = async function() {
         const colsDef = [
             { key:'clientes', nome:'CLIENTES', campos:['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes'] },
             { key:'produtos',  nome:'PRODUTOS', campos:['_id','codigo','codigo_fornecedor','descricao','categoria','fornecedor','unidade','valor_base','custo','estoque_atual'] },
-            { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','valor_total','condicao_pagamento','data_criacao'] },
+            { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','frete_valor_total','itens','data_criacao'] },
             { key:'parcelas',  nome:'PARCELAS', campos:['_id','numeroPedido','pedidoId','clienteNome','clienteCodigo','clienteId','valor','vencimento','status','numeroParcela','totalParcelas','dataCriacao','dataPagamento'] },
         ];
         const bancos = { clientes: window.bancoClientes, produtos: window.bancoProdutos, pedidos: window.bancoPedidos };
@@ -2198,3 +2198,5 @@ window.cancelarEdicao = function() {
     window.liberarLock();
     window.novoPedido();
 };
+
+
