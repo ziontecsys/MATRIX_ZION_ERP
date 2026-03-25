@@ -1939,10 +1939,15 @@ window.abrirPedidoParaEdicao = function(id) {
     atualizarBotoesStatus(pedido.status || 'Orçamento');
     atualizarBarraProgresso(pedido.status || 'Orçamento');
 
+    // Normaliza itens: pode chegar como string JSON se importado via backup antigo
+    if (pedido.itens && typeof pedido.itens === 'string') {
+        try { pedido.itens = JSON.parse(pedido.itens); } catch(e) { pedido.itens = []; }
+    }
+
     // Preenche itens usando adicionarProdutoNaTabela (mesma função do modal de produtos)
     const tbody = document.getElementById('tabela-itens');
     if (tbody) tbody.innerHTML = '';
-    if (pedido.itens?.length > 0) {
+    if (Array.isArray(pedido.itens) && pedido.itens.length > 0) {
         pedido.itens.forEach(item => {
             // Monta objeto produto compatível com adicionarProdutoNaTabela
             // Primeiro tenta achar no banco, senão usa os dados salvos no pedido
@@ -2198,5 +2203,3 @@ window.cancelarEdicao = function() {
     window.liberarLock();
     window.novoPedido();
 };
-
-
