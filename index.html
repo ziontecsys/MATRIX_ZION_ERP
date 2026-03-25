@@ -76,6 +76,21 @@
                 </div>
             </div>
 
+            <!-- TELA INICIAL: exibida enquanto nenhum pedido está ativo -->
+            <div id="tela-inicial-pedido" class="flex flex-col items-center justify-center py-24 gap-6">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">📋</div>
+                    <h3 class="text-2xl font-bold text-gray-700 mb-2">Nenhum pedido em aberto</h3>
+                    <p class="text-gray-400 mb-6">Clique no botão abaixo para iniciar um novo pedido</p>
+                    <button onclick="window.novoPedido()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-bold text-lg shadow flex items-center gap-2 mx-auto">
+                        ➕ Novo Pedido
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTEÚDO DO PEDIDO: oculto até que um pedido seja iniciado -->
+            <div id="conteudo-pedido" class="hidden space-y-6">
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- BLOCO CLIENTE -->
                 <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm cliente-card">
@@ -315,6 +330,7 @@
                 <p class="font-bold">⚠️ Pedido bloqueado para edição</p>
                 <p>Este pedido está em <span id="status-bloqueio"></span> e não pode ser alterado.</p>
             </div>
+            </div><!-- /conteudo-pedido -->
         </div>
 
         <!-- ABA 2 - CLIENTES -->

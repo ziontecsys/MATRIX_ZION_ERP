@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Admin — Matrix ERP</title>
+<title>Painel Admin — MPLEÃO</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
@@ -116,10 +116,10 @@
 <body>
 
 <header>
-  <span class="logo">Matrix <span style="color:#3b82f6">ERP</span></span>
+  <span class="logo">MPLEÃO</span>
   <span class="admin-badge">🔐 Admin</span>
   <span class="user-info" id="user-email">—</span>
-  <a href="index.html" class="back-btn">← Voltar ao Matrix ERP</a>
+  <a href="index.html" class="back-btn">← Voltar ao sistema</a>
 </header>
 
 <!-- Acesso negado -->
@@ -127,7 +127,7 @@
   <div class="icon">🚫</div>
   <h2>Acesso negado</h2>
   <p>Você não tem permissão para acessar o painel administrativo.<br>Entre em contato com o administrador do sistema.</p>
-  <a href="index.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao Matrix ERP</a>
+  <a href="index.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao sistema</a>
 </div>
 
 <main id="main-admin">
@@ -405,22 +405,18 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
-  authDomain: "matrix-zion-erp.firebaseapp.com",
-  projectId: "matrix-zion-erp",
-  storageBucket: "matrix-zion-erp.firebasestorage.app",
-  messagingSenderId: "904407462438",
-  appId: "1:904407462438:web:6eae08ec0ca69d46eaece7"
+  apiKey: "AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac",
+  authDomain: "mpleaoerp.firebaseapp.com",
+  projectId: "mpleaoerp"
 });
 const auth = getAuth(app);
 const db   = getFirestore(app);
-await setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
 let dadosDB = { clientes:[], produtos:[], pedidos:[], parcelas:[] };
 let dadosArquivo = {};
@@ -570,7 +566,7 @@ window.criarUsuario = async function() {
     const { getAuth: getAuth2, createUserWithEmailAndPassword, signOut: signOut2 } =
       await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     let appSec;
-    try { appSec = getApp('sec'); } catch { appSec = initializeApp({ apiKey:"AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc", authDomain:"matrix-zion-erp.firebaseapp.com", projectId:"matrix-zion-erp" }, 'sec'); }
+    try { appSec = getApp('sec'); } catch { appSec = initializeApp({ apiKey:"AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac", authDomain:"mpleaoerp.firebaseapp.com", projectId:"mpleaoerp" }, 'sec'); }
     const authSec = getAuth2(appSec);
     const cred = await createUserWithEmailAndPassword(authSec, email, senha);
     await setDoc(doc(db, 'usuarios', cred.user.uid), { email, admin: isAdm, criado_em: new Date().toISOString(), criado_por: usuarioAtual?.email || '' });
@@ -601,7 +597,7 @@ window.exportarBackup = async function() {
   const cols = [
     { key:'clientes', nome:'CLIENTES', campos:['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes','data_cadastro'] },
     { key:'produtos',  nome:'PRODUTOS', campos:['_id','codigo','codigo_fornecedor','descricao','categoria','cor','fornecedor','unidade','marca','valor_base','custo','estoque_atual','estoque_minimo','observacoes','data_cadastro'] },
-    { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','frete_valor_total','data_criacao'] },
+    { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','frete_valor_total','itens','data_criacao'] },
     { key:'parcelas',  nome:'PARCELAS', campos:['_id','numeroPedido','pedidoId','clienteNome','clienteCodigo','clienteId','valor','vencimento','status','numeroParcela','totalParcelas','dataCriacao','dataPagamento'] },
   ];
 
@@ -627,7 +623,7 @@ window.exportarBackup = async function() {
 
   // Instruções
   const wsI = XLSX.utils.aoa_to_sheet([
-    ['BACKUP Matrix ERP — INSTRUÇÕES'],[''],
+    ['BACKUP MPLEÃO ERP — INSTRUÇÕES'],[''],
     ['• A coluna _id é o identificador único no Firebase — NÃO altere'],
     ['• Registros com _id existente serão ATUALIZADOS na importação'],
     ['• Linhas sem _id com dados serão CRIADAS como novos registros'],
@@ -639,7 +635,7 @@ window.exportarBackup = async function() {
   bar.style.width = '100%'; lbl.textContent = 'Pronto!';
   const now = new Date();
   const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-  XLSX.writeFile(wb, `MatrixERP_Backup_${stamp}.xlsx`);
+  XLSX.writeFile(wb, `MPLEAO_Backup_${stamp}.xlsx`);
   btn.disabled = false; btn.innerHTML = '✅ Backup gerado! Exportar novamente';
 };
 
@@ -739,6 +735,11 @@ window.executarRestore = async function() {
       const idRaw = String(row._id || '').trim();
       const { _id, ...dados } = row;
       Object.keys(dados).forEach(k => { if (dados[k] === '') delete dados[k]; });
+
+      // Restaura itens (array gravado como JSON string no Excel)
+      if (dados.itens && typeof dados.itens === 'string') {
+        try { dados.itens = JSON.parse(dados.itens); } catch(e) { delete dados.itens; }
+      }
 
       // Normaliza data_criacao: aceita ISO ou "DD/MM/YYYY"
       if (dados.data_criacao) {

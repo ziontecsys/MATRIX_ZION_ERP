@@ -1344,10 +1344,16 @@ function renderizarTudo() {
     }
 
     const tbody = document.getElementById('tabela-itens');
-    if (tbody && tbody.children.length === 0) {
-        // Inicializa campos sem trocar de aba
+    const conteudoPedido = document.getElementById('conteudo-pedido');
+    const pedidoAtivo = conteudoPedido && !conteudoPedido.classList.contains('hidden');
+
+    if (tbody && tbody.children.length === 0 && !pedidoAtivo) {
+        // Página carregando sem pedido ativo — mantém tela inicial, não inicializa
+    } else if (tbody && tbody.children.length === 0) {
+        // Pedido ativo mas sem itens — re-inicializa campos
         _inicializarCamposPedido();
-    } else {        document.querySelectorAll('#tabela-itens .produto-select').forEach(select => {
+    } else {
+        document.querySelectorAll('#tabela-itens .produto-select').forEach(select => {
             if ($.fn.select2) $(select).select2({ placeholder: "Busque um produto...", allowClear: true, width: '100%' });
         });
     }
@@ -1631,6 +1637,10 @@ window.carregarMemoriaBanco = carregarMemoriaBanco;
 // NOVO PEDIDO
 // ==========================================
 function _inicializarCamposPedido() {
+    // Mostra o formulário e esconde a tela inicial
+    document.getElementById('tela-inicial-pedido')?.classList.add('hidden');
+    document.getElementById('conteudo-pedido')?.classList.remove('hidden');
+
     bloquearCampos(false);
     document.getElementById('aviso-bloqueio')?.classList.add('hidden');
     document.getElementById('pedido-id-atual').value = '';
@@ -1890,6 +1900,10 @@ window.abrirPedidoParaEdicao = function(id) {
 
     const cliente = window.bancoClientes.find(c => c.id === pedido.cliente_id);
 
+    // Mostra o formulário e esconde a tela inicial
+    document.getElementById('tela-inicial-pedido')?.classList.add('hidden');
+    document.getElementById('conteudo-pedido')?.classList.remove('hidden');
+
     bloquearCampos(false);
     document.getElementById('aviso-bloqueio')?.classList.add('hidden');
     document.getElementById('pedido-id-atual').value = pedido.id;
@@ -1939,15 +1953,10 @@ window.abrirPedidoParaEdicao = function(id) {
     atualizarBotoesStatus(pedido.status || 'Orçamento');
     atualizarBarraProgresso(pedido.status || 'Orçamento');
 
-    // Normaliza itens: pode chegar como string JSON se importado via backup antigo
-    if (pedido.itens && typeof pedido.itens === 'string') {
-        try { pedido.itens = JSON.parse(pedido.itens); } catch(e) { pedido.itens = []; }
-    }
-
     // Preenche itens usando adicionarProdutoNaTabela (mesma função do modal de produtos)
     const tbody = document.getElementById('tabela-itens');
     if (tbody) tbody.innerHTML = '';
-    if (Array.isArray(pedido.itens) && pedido.itens.length > 0) {
+    if (pedido.itens?.length > 0) {
         pedido.itens.forEach(item => {
             // Monta objeto produto compatível com adicionarProdutoNaTabela
             // Primeiro tenta achar no banco, senão usa os dados salvos no pedido
@@ -2203,3 +2212,5 @@ window.cancelarEdicao = function() {
     window.liberarLock();
     window.novoPedido();
 };
+
+
