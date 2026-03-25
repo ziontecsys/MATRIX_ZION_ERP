@@ -1756,7 +1756,7 @@ async function salvarPedidoAtual() {
     const statusAtual  = document.getElementById('select-status')?.value || 'Orçamento';
     const condicaoPag  = document.getElementById('select-condicao-pagamento')?.value || 'Vista';
     const primVenc     = document.getElementById('input-primeiro-vencimento')?.value || '';
-    const desconto     = parseFloat(document.getElementById('input-desconto')?.value?.replace(',','.')) || 0;
+    const pctDesconto  = parseFloat(document.getElementById('input-desconto')?.value?.replace(',','.')) || 0;
     const acrescimo    = parseFloat(document.getElementById('input-acrescimo')?.value?.replace(',','.')) || 0;
     const motivoAcres  = document.getElementById('input-motivo-acrescimo')?.value || '';
 
@@ -1770,8 +1770,10 @@ async function salvarPedidoAtual() {
     // Custo real em Reais
     const custoCombustivel = km > 0 ? (km / consumo) * litro * 2 : 0;
     const valorFreteTotal  = custoCombustivel + pedag;
-    
-    const valorTotal = subtotal + valorFreteTotal - desconto + acrescimo;
+
+    // Desconto é percentual — converte para reais antes de subtrair
+    const valorDesconto = subtotal * (pctDesconto / 100);
+    const valorTotal = subtotal - valorDesconto + valorFreteTotal + acrescimo;
 
 
     if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Salvando...'; }
@@ -1789,7 +1791,7 @@ async function salvarPedidoAtual() {
             status:                statusAtual,
             itens:                 itens,
             valor_total:           valorTotal,
-            desconto:              desconto,
+            desconto:              pctDesconto,
             acrescimo:             acrescimo,
             motivo_acrescimo:      motivoAcres,
             condicao_pagamento:    condicaoPag,
@@ -1930,7 +1932,7 @@ window.abrirPedidoParaEdicao = function(id) {
     document.getElementById('input-km').value      = pedido.frete_km      > 0 ? pedido.frete_km      : '0';
     document.getElementById('input-pedagio').value = pedido.frete_pedagio > 0 ? pedido.frete_pedagio : '';
     document.getElementById('input-previsao').value = pedido.previsao_entrega || '';
-    document.getElementById('input-desconto').value = pedido.desconto > 0 ? pedido.desconto.toFixed(2).replace('.',',') : '';
+    document.getElementById('input-desconto').value = pedido.desconto > 0 ? pedido.desconto : '';
     document.getElementById('input-acrescimo').value = pedido.acrescimo > 0 ? pedido.acrescimo.toFixed(2).replace('.',',') : '';
     document.getElementById('input-motivo-acrescimo').value = pedido.motivo_acrescimo || '';
 
@@ -2196,5 +2198,3 @@ window.cancelarEdicao = function() {
     window.liberarLock();
     window.novoPedido();
 };
-
-
