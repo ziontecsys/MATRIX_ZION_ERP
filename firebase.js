@@ -1783,13 +1783,15 @@ async function salvarPedidoAtual() {
         const opt = select.options[select.selectedIndex];
         const qtd = parseFloat(qtdEl?.value?.replace(',','.')) || 1;
         const val = parseFloat(valEl?.value?.replace(/[R$\s.]/g,'').replace(',','.')) || 0;
+        const descItem = parseFloat(tr.querySelector('.desconto-item')?.value || '0') || 0;
         itens.push({
             produto_id:     tr.dataset.produtoId || select.value,
             produto_codigo: opt?.dataset?.codigo || '',
             descricao:      opt?.text || '',
             fornecedor:     fornEl?.value || '',
             quantidade:     qtd,
-            valor_unitario: val
+            valor_unitario: val,
+            desconto_item:  descItem
         });
     });
 
@@ -1805,8 +1807,8 @@ async function salvarPedidoAtual() {
     const acrescimo    = parseFloat(document.getElementById('input-acrescimo')?.value?.replace(',','.')) || 0;
     const motivoAcres  = document.getElementById('input-motivo-acrescimo')?.value || '';
 
-    // Calcula valor total
-    let subtotal = itens.reduce((s, it) => s + (it.quantidade * it.valor_unitario), 0);
+    // Calcula valor total (desconto por item já embutido no total de cada linha)
+    let subtotal = itens.reduce((s, it) => s + (it.quantidade * it.valor_unitario * (1 - (it.desconto_item || 0) / 100)), 0);
     const km      = parseFloat(document.getElementById('input-km')?.value) || 0;
     const litro   = parseFloat(document.getElementById('input-litro')?.value?.replace(',','.')) || 4.20;
     const consumo = parseFloat(document.getElementById('input-consumo')?.value?.replace(',','.')) || 9.0;
@@ -2026,8 +2028,12 @@ window.abrirPedidoParaEdicao = function(id) {
                 const valEl = tr.querySelector('.valor-item');
                 if (valEl && item.valor_unitario) {
                     valEl.value = window.formatarValorReais(item.valor_unitario);
-                    window.calcularTudo?.();
                 }
+                const descEl = tr.querySelector('.desconto-item');
+                if (descEl && item.desconto_item) {
+                    descEl.value = item.desconto_item;
+                }
+                window.calcularTudo?.();
             }, 50);
         });
     }

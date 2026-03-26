@@ -244,6 +244,7 @@ function adicionarProdutoNaTabela(produto, quantidade) {
         <td class="p-2 border">${selectHtml}</td>
         <td class="p-2 border"><input type="text" value="${produto.fornecedor || ''}" class="w-full p-1 border rounded forn-item bg-gray-100" readonly></td>
         <td class="p-2 border"><input type="text" value="${formatarValorReais(produto.valor_base)}" class="w-24 p-1 border rounded valor-item bg-gray-100 text-right" readonly></td>
+        <td class="p-2 border text-center"><input type="number" value="0" min="0" max="100" step="0.1" class="w-14 p-1 border rounded desconto-item text-center text-green-700 font-medium" title="Desconto (%)" onchange="calcularTudo()" onkeyup="calcularTudo()"></td>
         <td class="p-2 border total-linha">R$ 0,00</td>
         <td class="p-2 border text-center"><button onclick="if(podeEditarPedido()) { this.closest('tr').remove(); setTimeout(calcularTudo, 50); } else { Swal.fire({ icon: 'error', title: 'Ação bloqueada', text: '❌ Não é possível remover itens de um pedido em andamento!', confirmButtonColor: '#3b82f6' }); }" class="text-red-500 font-bold hover:text-red-700">X</button></td>
     `;
@@ -563,12 +564,14 @@ function calcularTudo() {
     linhas.forEach(linha => {
         const qtdInput = linha.querySelector('.qtd-item');
         const valorInput = linha.querySelector('.valor-item');
+        const descontoInput = linha.querySelector('.desconto-item');
         const totalLinhaEl = linha.querySelector('.total-linha');
         if (!qtdInput || !valorInput || !totalLinhaEl) return;
 
         const qtd = parseFloat(qtdInput.value) || 0;
         const valor = parseFloat((valorInput.value || '0').replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0;
-        const totalLinha = qtd * valor;
+        const descPct = parseFloat(descontoInput?.value || '0') || 0;
+        const totalLinha = qtd * valor * (1 - descPct / 100);
         totalLinhaEl.innerText = formatarValorReais(totalLinha);
         subtotal += totalLinha;
     });
@@ -751,6 +754,11 @@ if (condicaoPagamento) {
 
     // Monta linhas dos itens
     let linhasHtml = '';
+    let temDescontoItem = false;
+    document.querySelectorAll('#tabela-itens tr:not(#linha-adicionar)').forEach(linha => {
+        const descPct = parseFloat(linha.querySelector('.desconto-item')?.value || '0') || 0;
+        if (descPct > 0) temDescontoItem = true;
+    });
     document.querySelectorAll('#tabela-itens tr:not(#linha-adicionar)').forEach(linha => {
         const qtd = linha.querySelector('.qtd-item')?.value || '0';
         const select = linha.querySelector('.desc-item');
@@ -759,16 +767,20 @@ if (condicaoPagamento) {
             const opt = select.options[select.selectedIndex];
             desc = opt?.dataset?.desc || opt?.text?.split(' - ')[0] || '';
         }
-        // Valor unitário: lê do campo e formata com milhar
         const valorRaw = parseFloat((linha.querySelector('.valor-item')?.value || '0').replace(/[^\d,]/g,'').replace(',','.')) || 0;
         const valorUnit = formatarValorReais(valorRaw);
+        const descPct = parseFloat(linha.querySelector('.desconto-item')?.value || '0') || 0;
         const total = linha.querySelector('.total-linha')?.innerText || 'R$ 0,00';
         if (desc) {
+            const colunaDesc = temDescontoItem
+                ? `<td style="padding:8px;text-align:center;border:1px solid #ddd;color:#16a34a;">${descPct > 0 ? descPct.toFixed(1).replace('.',',') + '%' : '-'}</td>`
+                : '';
             linhasHtml += `
                 <tr style="border-bottom:1px solid #eee;">
                     <td style="padding:8px;text-align:center;border:1px solid #ddd;">${qtd}</td>
                     <td style="padding:8px;border:1px solid #ddd;">${desc}</td>
                     <td style="padding:8px;text-align:right;border:1px solid #ddd;">${valorUnit}</td>
+                    ${colunaDesc}
                     <td style="padding:8px;text-align:right;font-weight:bold;border:1px solid #ddd;">${total}</td>
                 </tr>`;
         }
@@ -837,6 +849,7 @@ if (condicaoPagamento) {
                         <th style="padding:10px;border:1px solid #ddd;width:50px;text-align:center;">Qtd</th>
                         <th style="padding:10px;border:1px solid #ddd;">Descrição</th>
                         <th style="padding:10px;border:1px solid #ddd;width:110px;text-align:right;">V. Unit.</th>
+                        ${temDescontoItem ? '<th style="padding:10px;border:1px solid #ddd;width:70px;text-align:center;">Desc.%</th>' : ''}
                         <th style="padding:10px;border:1px solid #ddd;width:110px;text-align:right;">Total</th>
                     </tr>
                 </thead>
