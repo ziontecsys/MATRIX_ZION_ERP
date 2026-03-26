@@ -51,12 +51,20 @@
         }
         .sidebar-logo .brand {
             font-family: 'Syne', sans-serif;
-            font-size: 22px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+        .sidebar-logo .sub {
+            font-family: 'Syne', sans-serif;
+            font-size: 17px;
             font-weight: 800;
             color: var(--gold-light);
-            letter-spacing: .04em;
+            margin-top: 4px;
+            letter-spacing: .02em;
         }
-        .sidebar-logo .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
         .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
         .nav-item {
             display: flex; align-items: center; gap: 12px;
@@ -269,8 +277,8 @@
     <!-- ══ SIDEBAR ══ -->
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <div class="brand">⚡ Matrix <span style="color:#3b82f6">ERP</span></div>
-            <div class="sub" style="color:#3b82f6;font-size:10px;letter-spacing:.1em;">ZION TECNOLOGIA</div>
+            <div class="brand">Matrix ERP</div>
+            <div id="dash-nome-empresa" class="sub">ZION TECNOLOGIA</div>
         </div>
 
         <nav class="sidebar-nav">
@@ -278,7 +286,7 @@
             <a href="dashboard.html" class="nav-item active">
                 <span class="icon">📊</span> Dashboard
             </a>
-            <a href="index.html" class="nav-item">
+            <a href="pedidos.html" class="nav-item">
                 <span class="icon">📦</span> Sistema
             </a>
 
@@ -411,7 +419,7 @@
                 <div id="ultimos-pedidos">
                     <div class="empty pulse">Carregando...</div>
                 </div>
-                <a href="index.html" style="
+                <a href="pedidos.html" style="
                     display:block;text-align:center;margin-top:16px;padding:9px;
                     border:1px solid var(--border);border-radius:8px;
                     font-size:12px;font-weight:600;color:var(--muted);
@@ -434,7 +442,7 @@
 
                 <div class="card">
                     <div class="card-title"><div class="dot"></div>Acesso Rápido</div>
-                    <a href="index.html" class="quick-btn">
+                    <a href="pedidos.html" class="quick-btn">
                         <span class="q-icon">➕</span>
                         <span>Novo Pedido</span>
                         <span class="q-arrow">›</span>
@@ -466,16 +474,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
 
-const app = initializeApp({
-    apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
-    authDomain: "matrix-zion-erp.firebaseapp.com",
-    projectId: "matrix-zion-erp",
-    storageBucket: "matrix-zion-erp.firebasestorage.app",
-    messagingSenderId: "904407462438",
-    appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
-    measurementId: "G-PS30HSRHGP"
-});
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -521,20 +522,36 @@ const BADGE_STYLE = {
 onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
 
-    // Usuário
-    const nome = user.displayName || user.email.split('@')[0];
-    document.getElementById('user-display-name').textContent = nome;
-    document.getElementById('sidebar-user-name').textContent = nome;
-    document.getElementById('user-avatar-letter').textContent = nome[0].toUpperCase();
-
-    // Verifica se é admin
+    // Usuário — lê nome do Firestore (cadastrado pelo admin)
+    let nomeExib = user.displayName || user.email.split('@')[0];
     try {
         const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
-        const isAdmin = userDoc.exists() && userDoc.data().admin === true;
-        document.getElementById('sidebar-user-role').textContent = isAdmin ? '🔐 Administrador' : '👤 Usuário';
+        if (userDoc.exists()) {
+            const ud = userDoc.data();
+            if (ud.nome) nomeExib = ud.nome;
+            document.getElementById('sidebar-user-role').textContent = ud.admin === true ? '🔐 Administrador' : '👤 Usuário';
+        }
     } catch(e) {}
+    document.getElementById('user-display-name').textContent = nomeExib;
+    document.getElementById('sidebar-user-name').textContent = nomeExib;
+    document.getElementById('user-avatar-letter').textContent = nomeExib[0].toUpperCase();
 
     document.body.style.visibility = 'visible';
+
+    // Identidade da empresa (localStorage como cache, Firestore como fonte)
+    try {
+        const cached = localStorage.getItem('empresaConfig');
+        if (cached) {
+            const c = JSON.parse(cached);
+            if (c.nome_empresa) document.getElementById('dash-nome-empresa').textContent = c.nome_empresa;
+        }
+        const empSnap = await getDoc(doc(db, 'configuracoes', 'empresa'));
+        if (empSnap.exists()) {
+            const d = empSnap.data();
+            if (d.nome_empresa) document.getElementById('dash-nome-empresa').textContent = d.nome_empresa;
+            localStorage.setItem('empresaConfig', JSON.stringify(d));
+        }
+    } catch(e) {}
 
     // ── CARREGAR DADOS ──
     const [pSnap, cSnap, prSnap, paSnap] = await Promise.all([

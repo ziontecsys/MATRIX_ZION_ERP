@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix ERP - Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="scripts.js"></script>
+    <style>
+        .overflow-y-auto::-webkit-scrollbar { width: 8px; }
+        .overflow-y-auto::-webkit-scrollbar-track { background: #f1f1f1; }
+        .overflow-y-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-container"></div>
+    <script src="sidebar.js"></script>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8">
+
+        <div id="aba-clientes" class="space-y-6">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-users text-blue-600"></i> Gestão de Clientes
+            </h2>
+            <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-plus text-blue-500"></i> Novo Cliente
+                </h3>
+                <div class="space-y-4">
+                    <input type="hidden" id="cli-id" value="">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Código</label>
+                            <input type="text" id="cli-codigo" readonly class="w-full p-2 border rounded bg-gray-100 text-gray-500 font-mono text-sm cursor-not-allowed outline-none" placeholder="Gerado auto.">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nome Completo / Razão Social *</label>
+                            <input type="text" id="cli-nome" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Telefone / WhatsApp</label>
+                            <input type="text" id="cli-telefone" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="(17) 99999-9999" onkeyup="formatarTelefone(this)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">CPF / CNPJ</label>
+                            <input type="text" id="cli-documento" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Email</label>
+                            <input type="email" id="cli-email" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">CEP</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="cli-cep" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="00000-000" maxlength="9" onkeyup="formatarCEP(this)">
+                                <button type="button" onclick="window.buscarCEPCadastro()" class="bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center min-w-[50px] h-[42px]">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-9">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Endereço Completo</label>
+                            <input type="text" id="cli-endereco" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rua, número, bairro, cidade/UF">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Data de Nascimento</label>
+                            <input type="date" id="cli-nascimento" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Limite de Crédito (R$)</label>
+                            <input type="text" id="cli-limite" value="0,00" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 text-right font-bold text-green-700" onkeyup="formatarValorInput(this)">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Observações Internas</label>
+                        <textarea id="cli-obs" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows="2"></textarea>
+                    </div>
+                    <p id="cep-status-cadastro" class="text-xs font-medium"></p>
+                    <div class="flex items-end gap-2 justify-end">
+                        <button id="btn-cancelar-cliente" class="hidden bg-gray-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-600 transition" onclick="window.cancelarEdicaoCliente()">Cancelar</button>
+                        <button id="btn-salvar-cliente" onclick="window.salvarCliente()" class="bg-blue-600 text-white font-bold py-2 px-8 rounded hover:bg-blue-700 transition flex items-center gap-2">
+                            <i class="fas fa-save"></i> Salvar Cliente
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-8 border-t pt-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <h3 class="text-lg font-bold text-gray-700">Clientes Cadastrados</h3>
+                        <div class="relative w-full md:w-80">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search"></i></span>
+                            <input type="text" placeholder="Buscar cliente..." class="pl-10 p-2 border rounded-full border-gray-300 w-full text-sm outline-none focus:ring-2 focus:ring-blue-400" onkeyup="window.filtrarClientes(this.value)">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-bold">
+                                    <th class="p-3 border-b">Código</th>
+                                    <th class="p-3 border-b">Nome</th>
+                                    <th class="p-3 border-b">Telefone</th>
+                                    <th class="p-3 border-b">Endereço</th>
+                                    <th class="p-3 border-b">Limite</th>
+                                    <th class="p-3 border-b text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-clientes" class="text-sm divide-y divide-gray-100">
+                                <tr><td colspan="6" class="p-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i> Carregando clientes...</td></tr>
+                            </tbody>
+                        </table>
+                        <div id="pag-clientes"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module" src="firebase.js"></script>
+</body>
+</html>

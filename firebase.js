@@ -5,16 +5,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, getDoc, doc, updateDoc, deleteDoc, runTransaction, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc",
-    authDomain: "matrix-zion-erp.firebaseapp.com",
-    projectId: "matrix-zion-erp",
-    storageBucket: "matrix-zion-erp.firebasestorage.app",
-    messagingSenderId: "904407462438",
-    appId: "1:904407462438:web:6eae08ec0ca69d46eaece7",
-    measurementId: "G-PS30HSRHGP"
-};
+import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -750,7 +741,8 @@ function _renderFinanceiro() {
         });
     }
 
-    document.getElementById('tabela-financeiro').innerHTML = html;
+    const tblFin = document.getElementById('tabela-financeiro');
+    if (tblFin) tblFin.innerHTML = html;
     const ctrl = document.getElementById('pag-financeiro');
     if (ctrl) ctrl.innerHTML = _pagControles(total, _pag.financeiro.pagina, 'financeiro');
 }
@@ -1233,11 +1225,31 @@ async function carregarMemoriaBanco() {
 
         renderizarTudo();
 
+        // Verifica sessionStorage para abrir pedido direto (navegação entre páginas)
+        const pedidoParam = sessionStorage.getItem('abrirPedido');
+        if (pedidoParam && document.getElementById('tabela-itens')) {
+            sessionStorage.removeItem('abrirPedido');
+            window.abrirPedidoParaEdicao(pedidoParam);
+        }
+
+        // Carrega financeiro automaticamente se estiver na página financeiro
+        if (document.getElementById('aba-financeiro') && typeof window.carregarDadosFinanceiros === 'function') {
+            window.carregarDadosFinanceiros();
+        }
+
         // Carrega controle de estoque
         try {
             const cfgSistema = await getDoc(doc(db, 'configuracoes', 'sistema'));
             window.controleEstoqueAtivo = cfgSistema.exists() ? (cfgSistema.data().controle_estoque ?? false) : false;
         } catch(e) { window.controleEstoqueAtivo = false; }
+
+        // Carrega identidade da empresa e salva em localStorage
+        try {
+            const empSnap = await getDoc(doc(db, 'configuracoes', 'empresa'));
+            const empConfig = empSnap.exists() ? empSnap.data() : {};
+            localStorage.setItem('empresaConfig', JSON.stringify(empConfig));
+            document.dispatchEvent(new CustomEvent('empresaConfigCarregada', { detail: empConfig }));
+        } catch(e) { console.warn('Config empresa não encontrada.'); }
 
         // Autocorreção do contador de pedidos
         try {
@@ -1398,7 +1410,7 @@ function _renderPedidos() {
         </tr></thead>
         <tbody id="tabela-pedidos">${html}</tbody>
     </table>${_pagControles(total, _pag.pedidos.pagina, 'pedidos', 'wrap-pedidos-pag')}`;
-    else document.getElementById('tabela-pedidos').innerHTML = html;
+    else { const tbl = document.getElementById('tabela-pedidos'); if (tbl) tbl.innerHTML = html; }
 }
 
 // ── render individual clientes ──
@@ -1616,9 +1628,20 @@ window.exportarBackupRapido = async function() {
             window.XLSX.utils.book_append_sheet(wb, ws, col.nome);
         }
 
+        // Exporta configurações do sistema
+        try {
+            const configSnap = await getDocs(collection(db, 'configuracoes'));
+            const configRows = configSnap.docs.map(d => ({ _id: d.id, dados: JSON.stringify(d.data()) }));
+            const wsConfig = window.XLSX.utils.json_to_sheet(configRows.length ? configRows : [{ _id: '', dados: '' }]);
+            wsConfig['!cols'] = [{ wch: 22 }, { wch: 100 }];
+            window.XLSX.utils.book_append_sheet(wb, wsConfig, 'CONFIGURACOES');
+        } catch(e) { console.warn('Erro ao exportar configuracoes:', e); }
+
         const now = new Date();
         const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-        window.XLSX.writeFile(wb, `MatrixERP_Backup_${stamp}.xlsx`);
+        let _nomeArq = 'MatrixERP';
+        try { const _e = JSON.parse(localStorage.getItem('empresaConfig')||'{}'); if (_e.nome_empresa) _nomeArq = _e.nome_empresa.replace(/[^a-zA-Z0-9À-ÿ]/g,'_'); } catch(e) {}
+        window.XLSX.writeFile(wb, `${_nomeArq}_Backup_${stamp}.xlsx`);
         Swal.fire({ icon: 'success', title: 'Backup gerado!', timer: 2000, showConfirmButton: false });
     } catch(e) {
         console.error('Erro no backup:', e);
@@ -1632,6 +1655,8 @@ window.exportarBackupRapido = async function() {
 // EXPORTAÇÕES GLOBAIS
 // ==========================================
 window.carregarMemoriaBanco = carregarMemoriaBanco;
+// Expõe _inicializarCamposPedido para o stub de scripts.js
+window._inicializarCamposPedido = _inicializarCamposPedido;
 
 // ==========================================
 // NOVO PEDIDO
@@ -1705,12 +1730,22 @@ function _inicializarCamposPedido() {
     window.calcularTudo?.();
 }
 
-// novoPedido: inicializa campos E navega para a aba de cadastro
+// novoPedido: inicializa campos E navega para pedidos.html se necessário
 window.novoPedido = function() {
+    const paginaAtual = window.location.pathname.split('/').pop().replace(/\.html$/, '') || '';
+    if (paginaAtual !== 'pedidos') {
+        window.location.href = 'pedidos.html';
+        return;
+    }
     console.log('➕ Novo pedido');
     _inicializarCamposPedido();
-    window.mostrarAba('aba-cadastro');
 };
+
+// Se o usuário clicou em "Novo Pedido" antes do firebase.js carregar, executa agora
+if (window._novoPedidoPendente) {
+    window._novoPedidoPendente = false;
+    window.novoPedido();
+}
 
 // ==========================================
 // SALVAR PEDIDO ATUAL
@@ -1892,6 +1927,14 @@ window.salvarPedidoAtual = salvarPedidoAtual;
 // ABRIR PEDIDO PARA EDIÇÃO
 // ==========================================
 window.abrirPedidoParaEdicao = function(id) {
+    // Se não estiver na página de pedidos, redireciona guardando o ID no sessionStorage
+    const paginaAtual = window.location.pathname.split('/').pop().replace(/\.html$/, '') || '';
+    if (paginaAtual !== 'pedidos') {
+        sessionStorage.setItem('abrirPedido', id);
+        window.location.href = 'pedidos.html';
+        return;
+    }
+
     const pedido = window.bancoPedidos.find(x => x.id === id);
     if (!pedido) {
         Swal.fire({ icon: 'error', title: 'Erro', text: 'Pedido não encontrado!', confirmButtonColor: '#3b82f6' });
@@ -1956,8 +1999,12 @@ window.abrirPedidoParaEdicao = function(id) {
     // Preenche itens usando adicionarProdutoNaTabela (mesma função do modal de produtos)
     const tbody = document.getElementById('tabela-itens');
     if (tbody) tbody.innerHTML = '';
-    if (pedido.itens?.length > 0) {
-        pedido.itens.forEach(item => {
+    // Normaliza: itens pode vir como string JSON (restaurado de Excel)
+    let _itens = pedido.itens;
+    if (typeof _itens === 'string') { try { _itens = JSON.parse(_itens); } catch(e) { _itens = []; } }
+    if (!Array.isArray(_itens)) _itens = [];
+    if (_itens.length > 0) {
+        _itens.forEach(item => {
             // Monta objeto produto compatível com adicionarProdutoNaTabela
             // Primeiro tenta achar no banco, senão usa os dados salvos no pedido
             const produtoBanco = window.bancoProdutos.find(p => p.id === item.produto_id);

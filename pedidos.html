@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix ERP - Gestão de Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="scripts.js"></script>
+    <style>
+        .cliente-card { background: linear-gradient(to right, #f9fafb, #ffffff); border-left: 4px solid #3b82f6; }
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 36px; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        .overflow-y-auto::-webkit-scrollbar { width: 8px; }
+        .overflow-y-auto::-webkit-scrollbar-track { background: #f1f1f1; }
+        .overflow-y-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-container"></div>
+    <script src="sidebar.js"></script>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8">
+
+        <div id="aba-cadastro" class="space-y-6">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800">Pedido <span id="pdf-n-display"></span></h2>
+                <div class="flex gap-2">
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center gap-2 text-sm font-bold shadow-sm" onclick="window.novoPedido()">
+                        ➕ Novo Pedido
+                    </button>
+                    <input type="hidden" id="pedido-id-atual" value="">
+                </div>
+            </div>
+
+            <!-- TELA INICIAL: exibida enquanto nenhum pedido está ativo -->
+            <div id="tela-inicial-pedido" class="flex flex-col items-center justify-center py-24 gap-6">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">📋</div>
+                    <h3 class="text-2xl font-bold text-gray-700 mb-2">Nenhum pedido em aberto</h3>
+                    <p class="text-gray-400 mb-6">Clique no botão abaixo para iniciar um novo pedido</p>
+                    <button onclick="window.novoPedido()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-bold text-lg shadow flex items-center gap-2 mx-auto">
+                        ➕ Novo Pedido
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTEÚDO DO PEDIDO: oculto até que um pedido seja iniciado -->
+            <div id="conteudo-pedido" class="hidden space-y-6">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- BLOCO CLIENTE -->
+                    <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm cliente-card">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">👤 Dados do Cliente</h3>
+                        <div class="mb-4">
+                            <label class="text-xs text-gray-500 mb-1 block">🔍 Selecione o Cliente</label>
+                            <select id="input-cliente" class="w-full p-2 border rounded bg-gray-50 border-blue-300 focus:ring-2 focus:ring-blue-500" onchange="window.carregarDadosCliente()">
+                                <option value="">Selecione um cliente</option>
+                            </select>
+                        </div>
+                        <div id="dados-cliente-container" class="hidden space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <span class="font-medium text-gray-600">Telefone:</span>
+                                <span id="cliente-telefone" class="text-gray-800">-</span>
+                                <span class="font-medium text-gray-600">Documento:</span>
+                                <span id="cliente-documento" class="text-gray-800">-</span>
+                                <span class="font-medium text-gray-600">Endereço:</span>
+                                <span id="cliente-endereco" class="text-gray-800">-</span>
+                                <span class="font-medium text-gray-600">CEP:</span>
+                                <span id="cliente-cep" class="text-gray-800">-</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="input-endereco">
+                    </div>
+
+                    <!-- BLOCO FRETE -->
+                    <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">🚚 Cálculo de Frete (Manual)</h3>
+                        <div class="flex flex-wrap items-end gap-2">
+                            <div class="flex flex-wrap gap-2 flex-1 min-w-[300px]">
+                                <div class="w-20">
+                                    <label class="text-xs text-gray-500 mb-1 block">📏 KM</label>
+                                    <input type="number" id="input-km" value="0" step="0.1" class="w-full p-2 border rounded bg-gray-50 text-sm" onchange="calcularTudo()" onkeyup="calcularTudo()">
+                                </div>
+                                <div class="w-20">
+                                    <label class="text-xs text-gray-500 mb-1 block">⛽ R$/L</label>
+                                    <input type="number" id="input-litro" value="4.20" step="0.01" class="w-full p-2 border rounded bg-gray-50 text-sm" onchange="calcularTudo()" onkeyup="calcularTudo()">
+                                </div>
+                                <div class="w-20">
+                                    <label class="text-xs text-gray-500 mb-1 block">⚡ km/l</label>
+                                    <input type="number" id="input-consumo" value="9.0" step="0.1" class="w-full p-2 border rounded bg-gray-50 text-sm" onchange="calcularTudo()" onkeyup="calcularTudo()">
+                                </div>
+                                <div class="w-20">
+                                    <label class="text-xs text-gray-500 mb-1 block">🛣️ Pedágio</label>
+                                    <input type="text" id="input-pedagio" value="0,00" class="w-full p-2 border rounded bg-gray-50 text-right text-sm" onchange="calcularTudo()" onkeyup="formatarValorInput(this); calcularTudo()">
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-2 rounded-lg border border-blue-200 w-[250px]">
+                                <div class="grid grid-cols-3 gap-1">
+                                    <div class="text-center">
+                                        <span class="text-gray-600 text-xs">Combustível</span>
+                                        <span class="font-medium text-blue-800 block text-sm" id="custo-combustivel">R$ 0,00</span>
+                                    </div>
+                                    <div class="text-center border-l border-blue-200">
+                                        <span class="text-gray-600 text-xs">Pedágio</span>
+                                        <span class="font-medium text-blue-800 block text-sm" id="custo-pedagio">R$ 0,00</span>
+                                    </div>
+                                    <div class="text-center border-l border-blue-200">
+                                        <span class="text-gray-600 text-xs">Total</span>
+                                        <span class="font-bold text-blue-900 block text-sm" id="custo-total-frete">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="display-frete-estimado">
+                    </div>
+                </div>
+
+                <!-- CONTROLE DO PEDIDO -->
+                <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">📋 Controle do Pedido</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">📊 Progresso</span>
+                                    <span class="text-xs text-gray-500" id="status-label">Status: Orçamento</span>
+                                </div>
+                                <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                    <div id="progress-bar" style="width: 10%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500" style="background:#3b82f6"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-600 mt-1">
+                                    <span class="text-yellow-600">📋 Orçamento</span>
+                                    <span class="text-blue-600">🔧 Produção</span>
+                                    <span class="text-orange-600">🚚 Entrega</span>
+                                    <span class="text-green-600">✅ Entregue</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 mb-2 block">Status do Pedido</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    <button type="button" onclick="window.selecionarStatus('Orçamento')" id="status-orcamento" class="p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 border-yellow-500 bg-yellow-50 text-yellow-700">
+                                        <span class="text-2xl">📋</span><span class="text-xs font-medium">Orçamento</span>
+                                    </button>
+                                    <button type="button" onclick="window.selecionarStatus('Produção')" id="status-producao" class="p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 border-gray-200 bg-gray-50 text-gray-700">
+                                        <span class="text-2xl">🔧</span><span class="text-xs font-medium">Produção</span>
+                                    </button>
+                                    <button type="button" onclick="window.selecionarStatus('Em Entrega')" id="status-entrega" class="p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 border-gray-200 bg-gray-50 text-gray-700">
+                                        <span class="text-2xl">🚚</span><span class="text-xs font-medium">Em Entrega</span>
+                                    </button>
+                                    <button type="button" onclick="window.selecionarStatus('Entregue')" id="status-entregue" class="p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 border-gray-200 bg-gray-50 text-gray-700">
+                                        <span class="text-2xl">✅</span><span class="text-xs font-medium">Entregue</span>
+                                    </button>
+                                    <button type="button" onclick="window.selecionarStatus('Pedido Cancelado')" id="status-cancelado" class="p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 border-gray-200 bg-gray-50 text-gray-700">
+                                        <span class="text-2xl">🚫</span><span class="text-xs font-medium">Cancelado</span>
+                                    </button>
+                                    <button type="button" onclick="window.selecionarStatus('Orçamento Não Aprovado')" id="status-reprovado" class="p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 border-gray-200 bg-gray-50 text-gray-700">
+                                        <span class="text-2xl">📉</span><span class="text-xs font-medium">Não Aprovado</span>
+                                    </button>
+                                </div>
+                                <select id="select-status" class="hidden">
+                                    <option value="Orçamento">Orçamento</option>
+                                    <option value="Produção">Produção</option>
+                                    <option value="Em Entrega">Em Entrega</option>
+                                    <option value="Entregue">Entregue</option>
+                                    <option value="Pedido Cancelado">Pedido Cancelado</option>
+                                    <option value="Orçamento Não Aprovado">Orçamento Não Aprovado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs text-gray-500">📅 Previsão de Entrega</label>
+                                <input type="date" id="input-previsao" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 mt-1">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">💰 Condição de Pagamento</label>
+                                <select id="select-condicao-pagamento" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 mt-1" onchange="atualizarParcelas()">
+                                    <option value="Vista">À Vista</option>
+                                    <option value="2x">2x sem juros</option>
+                                    <option value="3x">3x sem juros</option>
+                                    <option value="4x">4x sem juros</option>
+                                    <option value="5x">5x sem juros</option>
+                                    <option value="6x">6x sem juros</option>
+                                    <option value="Personalizado">Personalizado</option>
+                                </select>
+                            </div>
+                            <div id="div-parcelas-personalizado" class="hidden">
+                                <label class="text-xs text-gray-500">Número de Parcelas</label>
+                                <input type="number" id="input-parcelas" value="1" min="1" max="24" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 mt-1">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">📆 Primeiro Vencimento</label>
+                                <input type="date" id="input-primeiro-vencimento" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">💳 Forma de Pagamento</label>
+                                <select id="select-pagamento" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 mt-1" onchange="calcularTudo()">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                    <option value="Boleto">Boleto</option>
+                                    <option value="Transferência">Transferência</option>
+                                </select>
+                            </div>
+                            <div id="info-taxa" class="hidden text-sm text-red-600 bg-red-50 p-2 rounded border border-red-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABELA DE ITENS -->
+                <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-700">🛒 Itens do Pedido</h3>
+                        <button id="btn-adicionar-itens" onclick="window.abrirModalItens()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm font-bold flex items-center gap-2">
+                            ➕ Adicionar Itens
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <th class="p-2 border">Qtd</th>
+                                    <th class="p-2 border">Produto</th>
+                                    <th class="p-2 border">Fornecedor</th>
+                                    <th class="p-2 border w-28">V. Unit.</th>
+                                    <th class="p-2 border w-28">Total</th>
+                                    <th class="p-2 border w-10">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-itens">
+                                <tr>
+                                    <td colspan="6" class="p-4 text-center text-gray-500">
+                                        Nenhum item adicionado. Clique em "Adicionar Itens" para começar.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- RODAPÉ COM BOTÕES -->
+                <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-6">
+                        <div class="w-full md:w-1/2 space-y-4">
+                            <h3 class="text-lg font-semibold mb-2 text-gray-700">🏷️ Ajustes</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-gray-500">Desconto (%)</label>
+                                    <input type="number" id="input-desconto" value="0" min="0" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500" onchange="calcularTudo()" onkeyup="calcularTudo()">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500">Acréscimo (R$)</label>
+                                    <input type="text" id="input-acrescimo" value="0,00" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500 text-right" onchange="calcularTudo()" onkeyup="formatarValorInput(this); calcularTudo()">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Motivo do acréscimo</label>
+                                <input type="text" id="input-motivo-acrescimo" placeholder="Ex: 5 fechaduras extras..." class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="w-full md:w-1/3 bg-gray-50 p-4 rounded border">
+                            <p class="text-gray-500" id="display-subtotal">Subtotal: R$ 0,00</p>
+                            <p class="text-green-600 font-medium" id="display-desconto">Desconto: - R$ 0,00</p>
+                            <p class="text-orange-600 font-medium" id="display-acrescimo">Acréscimo: + R$ 0,00</p>
+                            <p class="text-gray-500" id="display-frete-final">Frete: R$ 0,00</p>
+                            <p class="text-red-500 hidden" id="display-taxa-final">Taxa Cartão: R$ 0,00</p>
+                            <div class="border-t mt-2 pt-2 mb-4">
+                                <p class="text-2xl font-bold text-gray-800" id="display-total">Total: R$ 0,00</p>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button id="btn-cancelar-pedido" class="hidden w-full bg-gray-500 text-white font-bold py-2 rounded hover:bg-gray-600 transition" onclick="window.cancelarEdicao()">
+                                    ❌ Cancelar Edição
+                                </button>
+                                <button id="btn-salvar" onclick="window.salvarPedidoAtual()" class="w-full bg-green-600 text-white font-bold py-2 rounded hover:bg-green-700 transition">
+                                    📦 Salvar Pedido
+                                </button>
+                                <button id="btn-gerar-pdf" onclick="gerarPDF()" data-total="0,00" class="w-full bg-gray-800 text-white font-bold py-2 rounded hover:bg-gray-900 border border-gray-700 shadow-sm">
+                                    🖨️ Imprimir PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aviso-bloqueio" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded" role="alert">
+                    <p class="font-bold">⚠️ Pedido bloqueado para edição</p>
+                    <p>Este pedido está em <span id="status-bloqueio"></span> e não pode ser alterado.</p>
+                </div>
+
+            </div><!-- /conteudo-pedido -->
+        </div>
+
+        <!-- MODAL DE ADICIONAR ITENS -->
+        <div id="modal-itens" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">➕ Adicionar Itens ao Pedido</h3>
+                    <button onclick="fecharModalItens()" class="text-gray-500 hover:text-gray-700"><span class="text-2xl">&times;</span></button>
+                </div>
+                <div class="p-4 overflow-y-auto" style="max-height: calc(80vh - 120px);">
+                    <div class="mb-4 text-xs text-gray-500 bg-blue-50 p-2 rounded flex items-center gap-2">
+                        <span>⌨️</span>
+                        <span>Digite para buscar | Setas ⬆️⬇️ para navegar | ENTER para adicionar | ESC para fechar</span>
+                    </div>
+                    <div class="mb-4">
+                        <input type="text" id="busca-produtos-modal" placeholder="🔍 Buscar por código, nome, categoria..." class="w-full p-3 border rounded border-gray-300 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200" onkeyup="window.filtrarProdutosModal(this.value)">
+                    </div>
+                    <div id="lista-produtos-modal" class="space-y-2"></div>
+                </div>
+                <div class="p-4 bg-gray-50 border-t flex justify-between items-center">
+                    <span id="total-produtos-selecionados" class="text-sm text-gray-600">0 produtos selecionados</span>
+                    <div class="flex gap-2">
+                        <button onclick="fecharModalItens()" class="px-4 py-2 bg-gray-500 text-white rounded transition">Cancelar</button>
+                        <button onclick="adicionarProdutosSelecionados()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Adicionar Selecionados</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module" src="firebase.js"></script>
+</body>
+</html>

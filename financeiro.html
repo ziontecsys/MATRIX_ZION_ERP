@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix ERP - Financeiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="scripts.js"></script>
+    <style>
+        .financeiro-card { transition: all 0.2s; }
+        .financeiro-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .status-pago { background-color: #d1fae5; border-left: 4px solid #10b981; }
+        .status-pendente { background-color: #fef3c7; border-left: 4px solid #f59e0b; }
+        .status-atrasado { background-color: #fee2e2; border-left: 4px solid #dc2626; }
+        .badge-pago { background-color: #10b981; color: white; }
+        .badge-pendente { background-color: #f59e0b; color: white; }
+        .badge-atrasado { background-color: #dc2626; color: white; }
+        .overflow-y-auto::-webkit-scrollbar { width: 8px; }
+        .overflow-y-auto::-webkit-scrollbar-track { background: #f1f1f1; }
+        .overflow-y-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-container"></div>
+    <script src="sidebar.js"></script>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8">
+
+        <div id="aba-financeiro" class="space-y-6">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 border-b pb-2">💰 Módulo Financeiro</h2>
+
+            <!-- CARDS DE RESUMO -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm financeiro-card border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-500 uppercase">Total a Receber</p>
+                    <p class="text-2xl font-bold text-gray-800" id="total-a-receber">R$ 0,00</p>
+                    <p class="text-xs text-gray-400">Todos os pedidos</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm financeiro-card border-l-4 border-yellow-500">
+                    <p class="text-xs text-gray-500 uppercase">A Vencer</p>
+                    <p class="text-2xl font-bold text-gray-800" id="total-a-vencer">R$ 0,00</p>
+                    <p class="text-xs text-gray-400">Próximos 30 dias</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm financeiro-card border-l-4 border-red-500">
+                    <p class="text-xs text-gray-500 uppercase">Em Atraso</p>
+                    <p class="text-2xl font-bold text-red-600" id="total-atrasado">R$ 0,00</p>
+                    <p class="text-xs text-gray-400">Clientes inadimplentes</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm financeiro-card border-l-4 border-green-500">
+                    <p class="text-xs text-gray-500 uppercase">Recebido no Mês</p>
+                    <p class="text-2xl font-bold text-green-600" id="total-recebido-mes">R$ 0,00</p>
+                    <p class="text-xs text-gray-400">Este mês</p>
+                </div>
+            </div>
+
+            <!-- FILTROS -->
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+                <div class="flex flex-wrap gap-4 mb-4 items-end bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Filtrar por Status</label>
+                        <select id="filtro-status-financeiro" onchange="window.filtrarFinanceiro()" class="p-2 border rounded text-sm outline-none focus:border-blue-500">
+                            <option value="todos">Todas (exceto canceladas)</option>
+                            <option value="pendente">A Receber</option>
+                            <option value="atrasado">🚨 Atrasadas</option>
+                            <option value="pago">✅ Pagas</option>
+                            <option value="cancelado">🚫 Canceladas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Filtrar por Cliente</label>
+                        <select id="filtro-cliente-financeiro" onchange="window.filtrarFinanceiro()" class="p-2 border rounded text-sm outline-none focus:border-blue-500">
+                            <option value="todos">Todos os clientes</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Buscar Cliente ou Pedido</label>
+                        <input type="text" id="busca-financeiro" onkeyup="window.filtrarFinanceiro()" placeholder="Digite o nome ou #número..." class="w-full p-2 border rounded text-sm outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELA CONTAS A RECEBER -->
+            <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold mb-4 text-gray-700">📋 Contas a Receber</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[1000px]">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-sm">
+                                <th class="p-2 border">Cliente</th>
+                                <th class="p-2 border">Pedido</th>
+                                <th class="p-2 border">Parcela</th>
+                                <th class="p-2 border">Vencimento</th>
+                                <th class="p-2 border">Valor</th>
+                                <th class="p-2 border">Status</th>
+                                <th class="p-2 border">Dias</th>
+                                <th class="p-2 border">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-financeiro" class="text-sm">
+                            <tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando dados financeiros...</td></tr>
+                        </tbody>
+                    </table>
+                    <div id="pag-financeiro"></div>
+                </div>
+            </div>
+
+            <!-- TABELA PREVISÃO -->
+            <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700">📅 Previsão de Recebimento</h3>
+                    <span class="text-xs text-gray-400">Parcelas pendentes por mês</span>
+                </div>
+                <div class="overflow-auto" style="max-height:320px">
+                    <table class="w-full text-sm">
+                        <thead class="sticky top-0">
+                            <tr class="bg-gray-50 text-gray-600 text-left">
+                                <th class="p-2 border-b font-semibold">Mês / Ano</th>
+                                <th class="p-2 border-b font-semibold text-right">Valor a Receber</th>
+                                <th class="p-2 border-b font-semibold text-center">Parcelas</th>
+                                <th class="p-2 border-b font-semibold text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-previsao">
+                            <tr><td colspan="4" class="p-4 text-center text-gray-400">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                    <div id="pag-previsao"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module" src="firebase.js"></script>
+</body>
+</html>

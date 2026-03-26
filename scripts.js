@@ -477,19 +477,27 @@ function handleModalKeyDown(event) {
 // NAVEGAÇÃO
 // ==========================================
 function mostrarAba(abaId) {
+    const pageMap = {
+        'aba-cadastro':  'pedidos.html',
+        'aba-clientes':  'clientes.html',
+        'aba-produtos':  'produtos.html',
+        'aba-logistica': 'logistica.html',
+        'aba-financeiro':'financeiro.html'
+    };
+
+    // Se o elemento não existe nesta página, navega para a página correta
+    const abaEl = document.getElementById(abaId);
+    if (!abaEl) {
+        if (pageMap[abaId]) window.location.href = pageMap[abaId];
+        return;
+    }
+
+    // Compatibilidade: caso ainda haja múltiplas abas na mesma página (index.html legado)
     ['aba-cadastro','aba-clientes','aba-produtos','aba-logistica','aba-financeiro'].forEach(aba => {
         const el = document.getElementById(aba);
         if (el) el.classList.add('hidden');
     });
-    const abaEl = document.getElementById(abaId);
-    if (abaEl) abaEl.classList.remove('hidden');
-
-    ['btn-cadastro','btn-clientes','btn-produtos','btn-logistica','btn-financeiro'].forEach(btn => {
-        const el = document.getElementById(btn);
-        if (el) el.classList.remove('bg-gray-700');
-    });
-    const btnEl = document.getElementById('btn-' + abaId.split('-')[1]);
-    if (btnEl) btnEl.classList.add('bg-gray-700');
+    abaEl.classList.remove('hidden');
 
     if (abaId === 'aba-financeiro' && typeof window.carregarDadosFinanceiros === 'function') {
         window.carregarDadosFinanceiros();
@@ -790,13 +798,29 @@ if (condicaoPagamento) {
     if (freteNum     > 0) breakdownHtml += `<tr><td style="padding:5px 10px;color:#555;">Frete</td><td style="padding:5px 10px;text-align:right;">${formatarValorReais(freteNum)}</td></tr>`;
     if (taxaVisivel && elTaxaText) breakdownHtml += `<tr><td style="padding:5px 10px;color:#7c3aed;">Taxa Cartão</td><td style="padding:5px 10px;text-align:right;color:#7c3aed;">${elTaxaText.replace(/.*: /,'')}</td></tr>`;
 
+    // Lê identidade da empresa do cache local
+    let _emp = {};
+    try { _emp = JSON.parse(localStorage.getItem('empresaConfig') || '{}'); } catch(e) {}
+    const _nomeEmpresaPDF    = _emp.nome_empresa    || '';
+    const _sloganPDF         = _emp.slogan          || '';
+    const _documentoPDF      = _emp.documento       || '';
+    const _telefonePDF       = _emp.telefone        || '';
+    const _enderecoPDF       = _emp.endereco        || '';
+    const _modoImpressao     = _emp.impressao_modo  || 'simples';
+
+    // Monta cabeçalho da empresa conforme modo
+    let _cabecalhoEmpresa = `<h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.5px;">${_nomeEmpresaPDF}</h1>`;
+    if (_sloganPDF) _cabecalhoEmpresa += `<p style="margin:3px 0 0;font-size:11px;color:#666;">${_sloganPDF}</p>`;
+    if (_modoImpressao === 'completo') {
+        if (_documentoPDF) _cabecalhoEmpresa += `<p style="margin:3px 0 0;font-size:11px;color:#555;">${_documentoPDF}</p>`;
+        if (_telefonePDF)  _cabecalhoEmpresa += `<p style="margin:2px 0 0;font-size:11px;color:#555;">${_telefonePDF}</p>`;
+        if (_enderecoPDF)  _cabecalhoEmpresa += `<p style="margin:2px 0 0;font-size:11px;color:#555;">${_enderecoPDF}</p>`;
+    }
+
     const conteudo = `
         <div style="padding:30px;font-family:Arial,sans-serif;color:#333;max-width:800px;margin:0 auto;">
             <div style="display:flex;justify-content:space-between;border-bottom:2px solid #999;padding-bottom:12px;margin-bottom:20px;">
-                <div>
-                    <h1 style="margin:0;font-size:26px;letter-spacing:-0.5px;">MPLEÃO</h1>
-                    <p style="margin:2px 0 0 0;font-size:11px;color:#666;">Esquadrias de aço e alumínio</p>
-                </div>
+                <div>${_cabecalhoEmpresa}</div>
                 <div style="text-align:right;">
                     <h2 style="margin:0;font-size:18px;">PEDIDO Nº ${numeroDisplay}</h2>
                     <p style="margin:2px 0 0 0;font-size:11px;color:#666;">Data: ${dataAtual}</p>
@@ -832,7 +856,7 @@ if (condicaoPagamento) {
             </div>
 
             <div style="margin-top:60px;display:flex;justify-content:space-between;">
-                <div style="width:40%;border-top:1px solid #999;text-align:center;padding-top:8px;font-size:11px;color:#666;">Assinatura MPLEÃO</div>
+                <div style="width:40%;border-top:1px solid #999;text-align:center;padding-top:8px;font-size:11px;color:#666;">Assinatura ${_nomeEmpresaPDF}</div>
                 <div style="width:40%;border-top:1px solid #999;text-align:center;padding-top:8px;font-size:11px;color:#666;">Assinatura do Cliente</div>
             </div>
         </div>
@@ -879,3 +903,25 @@ window.filtrarProdutosModal = filtrarProdutosModal;
 window.selecionarProdutoModal = selecionarProdutoModal;
 window.selecionarProdutoParaQuantidade = selecionarProdutoParaQuantidade;
 window.quantidadeKeyDown = quantidadeKeyDown;
+
+// ==========================================
+// STUB: novoPedido (disponível antes do firebase.js carregar)
+// firebase.js sobrescreve com a versão completa após inicializar
+// ==========================================
+window.novoPedido = function() {
+    const paginaAtual = window.location.pathname.split('/').pop().replace(/\.html$/, '') || '';
+    if (paginaAtual !== 'pedidos') {
+        window.location.href = 'pedidos.html';
+        return;
+    }
+    // Mostra formulário
+    document.getElementById('tela-inicial-pedido')?.classList.add('hidden');
+    document.getElementById('conteudo-pedido')?.classList.remove('hidden');
+    // Chama inicialização completa se firebase.js já carregou
+    if (typeof window._inicializarCamposPedido === 'function') {
+        window._inicializarCamposPedido();
+    } else {
+        // Sinaliza para firebase.js inicializar quando estiver pronto
+        window._novoPedidoPendente = true;
+    }
+};

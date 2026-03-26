@@ -116,10 +116,10 @@
 <body>
 
 <header>
-  <span class="logo">MPLEÃO</span>
+  <span class="logo" id="admin-logo">Matrix ERP</span>
   <span class="admin-badge">🔐 Admin</span>
   <span class="user-info" id="user-email">—</span>
-  <a href="index.html" class="back-btn">← Voltar ao sistema</a>
+  <a href="pedidos.html" class="back-btn">← Voltar ao sistema</a>
 </header>
 
 <!-- Acesso negado -->
@@ -127,7 +127,7 @@
   <div class="icon">🚫</div>
   <h2>Acesso negado</h2>
   <p>Você não tem permissão para acessar o painel administrativo.<br>Entre em contato com o administrador do sistema.</p>
-  <a href="index.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao sistema</a>
+  <a href="pedidos.html" class="btn btn-ghost" style="margin-top:8px">← Voltar ao sistema</a>
 </div>
 
 <main id="main-admin">
@@ -164,6 +164,11 @@
       <span class="card-icon">⚙️</span>
       <div class="card-title">Configurações do Sistema</div>
       <div class="card-desc">Definir valores padrão de combustível e consumo usados no cálculo de frete.</div>
+    </div>
+    <div class="card" onclick="abrirPainel('painel-identidade')">
+      <span class="card-icon">🏢</span>
+      <div class="card-title">Identidade da Empresa</div>
+      <div class="card-desc">Personalizar o nome e slogan da empresa exibidos na tela de login e no painel lateral.</div>
     </div>
     <div class="card danger" onclick="abrirPainel('painel-reset')">
       <span class="card-icon">☠️</span>
@@ -266,7 +271,7 @@
         <div class="stats-bar" id="result-stats-restore"></div>
         <div class="log" id="log-restore"></div>
         <div class="btn-row">
-          <button class="btn btn-primary" onclick="window.location.href='index.html'">🏠 Voltar ao sistema</button>
+          <button class="btn btn-primary" onclick="window.location.href='pedidos.html'">🏠 Voltar ao sistema</button>
           <button class="btn btn-ghost" onclick="novaImportacao()">↩️ Nova importação</button>
         </div>
       </div>
@@ -281,7 +286,12 @@
       <!-- Criar novo usuário -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;">
         <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text)">➕ Criar Novo Usuário</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;flex-wrap:wrap;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;flex-wrap:wrap;">
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Nome completo</label>
+            <input type="text" id="novo-nome" placeholder="Ex: João Silva"
+              style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);box-sizing:border-box;">
+          </div>
           <div>
             <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">E-mail</label>
             <input type="email" id="novo-email" placeholder="usuario@email.com"
@@ -401,20 +411,88 @@
     </div>
   </div>
 
+  <!-- IDENTIDADE DA EMPRESA -->
+  <div class="panel-wrap" id="painel-identidade">
+    <div class="panel">
+      <div class="ptitle">🏢 Identidade da Empresa</div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.6;">
+        Personalize como o sistema é apresentado ao cliente. Nome e slogan aparecem na tela de login e na barra lateral.<br>
+        <span style="color:var(--accent2);font-size:12px;">A marca <b>Zion Tecnologia</b> permanece visível no rodapé.</span>
+      </p>
+
+      <!-- Identificação -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">Identificação</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:640px;margin-bottom:20px;">
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🏢 Nome da Empresa</label>
+          <input type="text" id="id-nome-empresa" placeholder="ex: Distribuidora Central" maxlength="60"
+            style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Aparece abaixo de "Matrix ERP" na barra lateral e na tela de login.</div>
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">💬 Slogan / Descrição</label>
+          <input type="text" id="id-slogan" placeholder="ex: Qualidade e confiança desde 2005" maxlength="80"
+            style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Substitui "Identifique-se para acessar o painel" na tela de login.</div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🪪 CNPJ / CPF</label>
+          <input type="text" id="id-documento" placeholder="ex: 12.345.678/0001-90" maxlength="20"
+            style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">📞 Telefone</label>
+          <input type="text" id="id-telefone" placeholder="ex: (11) 99999-9999" maxlength="20"
+            style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">📍 Endereço</label>
+          <input type="text" id="id-endereco" placeholder="ex: Rua das Flores, 123 — Centro, São Paulo/SP" maxlength="120"
+            style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+        </div>
+      </div>
+
+      <!-- Impressão de pedidos -->
+      <div style="padding-top:20px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">Impressão de Pedidos</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">Escolha quais dados da empresa aparecem no cabeçalho do PDF do pedido.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:480px;">
+          <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:14px 16px;border-radius:8px;border:1px solid var(--border);transition:border-color .15s;" id="lbl-modo-simples">
+            <input type="radio" name="impressao-modo" id="modo-simples" value="simples" style="margin-top:2px;accent-color:var(--accent);">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);">Simplificado</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Exibe apenas <b>Nome da Empresa</b> e <b>Slogan</b>.</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:14px 16px;border-radius:8px;border:1px solid var(--border);transition:border-color .15s;" id="lbl-modo-completo">
+            <input type="radio" name="impressao-modo" id="modo-completo" value="completo" style="margin-top:2px;accent-color:var(--accent);">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);">Completo</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Exibe <b>Nome</b>, <b>Slogan</b>, <b>CNPJ/CPF</b>, <b>Telefone</b> e <b>Endereço</b>.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div id="id-msg" style="margin-top:16px;font-size:13px;min-height:20px;"></div>
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-ghost" onclick="fecharPainel('painel-identidade')">Fechar</button>
+        <button class="btn btn-primary" onclick="salvarIdentidade()">💾 Salvar Identidade</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
   getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac",
-  authDomain: "mpleaoerp.firebaseapp.com",
-  projectId: "mpleaoerp"
-});
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -427,6 +505,19 @@ onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'login.html'; return; }
   usuarioAtual = user;
   document.getElementById('user-email').textContent = user.email;
+
+  // Carrega nome da empresa no header (localStorage primeiro, depois Firestore)
+  try {
+    const _c = JSON.parse(localStorage.getItem('empresaConfig')||'{}');
+    if (_c.nome_empresa) document.getElementById('admin-logo').textContent = _c.nome_empresa;
+  } catch(e) {}
+  try {
+    const empSnap = await getDoc(doc(db, 'configuracoes', 'empresa'));
+    if (empSnap.exists() && empSnap.data().nome_empresa) {
+      document.getElementById('admin-logo').textContent = empSnap.data().nome_empresa;
+      localStorage.setItem('empresaConfig', JSON.stringify(empSnap.data()));
+    }
+  } catch(e) {}
 
   // Verifica se tem admin:true no Firestore
   const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
@@ -472,31 +563,32 @@ async function carregarUsuarios() {
     const u = d.data();
     const isAdmin = u.admin === true;
     const eVoce = d.id === usuarioAtual?.uid;
+    const nomeExib = u.nome || u.email?.split('@')[0] || d.id;
     return `
       <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;flex-wrap:wrap;">
         <span style="font-size:20px">${isAdmin ? '🔐' : '👤'}</span>
         <div style="flex:1;min-width:160px;">
-          <div style="font-size:13px;font-weight:600">${u.email || d.id} ${eVoce ? '<span style="font-size:11px;color:var(--muted)">(você)</span>' : ''}</div>
-          <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">${d.id}</div>
+          <div style="font-size:13px;font-weight:600">${nomeExib} ${eVoce ? '<span style="font-size:11px;color:var(--muted)">(você)</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--muted)">${u.email || ''}</div>
         </div>
         <span style="font-size:11px;padding:3px 10px;border-radius:99px;font-weight:700;
           ${isAdmin ? 'background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)' : 'background:var(--border);color:var(--muted)'}">
           ${isAdmin ? 'ADMIN' : 'Usuário'}
         </span>
         ${!eVoce ? `
-          <button onclick="toggleAdmin('${d.id}', ${isAdmin}, '${u.email||''}')" title="${isAdmin ? 'Remover admin' : 'Tornar admin'}"
+          <button onclick="toggleAdmin('${d.id}', ${isAdmin}, '${u.email||''}')"
             style="background:${isAdmin ? 'rgba(239,68,68,.1)' : 'rgba(59,127,245,.1)'};
               border:1px solid ${isAdmin ? 'rgba(239,68,68,.3)' : 'rgba(59,127,245,.3)'};
               color:${isAdmin ? 'var(--danger)' : 'var(--accent)'};
               border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
             ${isAdmin ? '✕ Admin' : '+ Admin'}
           </button>
-          <button onclick="resetarSenha('${u.email||''}')" title="Enviar e-mail de redefinição de senha"
+          <button onclick="trocarSenha('${d.id}', '${u.email||''}')"
             style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:#ca8a04;
               border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
-            🔑 Reset senha
+            🔑 Trocar Senha
           </button>
-          <button onclick="excluirUsuario('${d.id}', '${u.email||''}')" title="Excluir usuário"
+          <button onclick="excluirUsuario('${d.id}', '${u.email||''}')"
             style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--danger);
               border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
             🗑️
@@ -519,21 +611,45 @@ window.toggleAdmin = async function(uid, isAdmin, email) {
   Swal.fire({ icon: 'success', title: 'Atualizado!', timer: 1500, showConfirmButton: false });
 };
 
-window.resetarSenha = async function(email) {
+window.trocarSenha = async function(uid, email) {
   if (!email) { Swal.fire({ icon: 'warning', title: 'Sem e-mail', text: 'Este usuário não tem e-mail registrado.' }); return; }
-  const r = await Swal.fire({
-    title: '🔑 Resetar senha?',
-    text: `Enviar e-mail de redefinição para ${email}?`,
-    icon: 'question', showCancelButton: true,
-    confirmButtonColor: '#ca8a04', cancelButtonColor: '#6b7280',
-    confirmButtonText: 'Enviar e-mail', cancelButtonText: 'Cancelar'
+
+  const { value: novaSenha } = await Swal.fire({
+    title: '🔑 Trocar Senha',
+    html: `Definir nova senha para <b>${email}</b>`,
+    input: 'password',
+    inputPlaceholder: 'Nova senha (mínimo 6 caracteres)',
+    inputAttributes: { autocomplete: 'new-password' },
+    showCancelButton: true,
+    confirmButtonColor: '#ca8a04',
+    confirmButtonText: 'Trocar senha',
+    cancelButtonText: 'Cancelar',
+    inputValidator: v => (!v || v.length < 6) ? 'A senha deve ter ao menos 6 caracteres.' : null
   });
-  if (!r.isConfirmed) return;
+  if (!novaSenha) return;
+
   try {
-    await sendPasswordResetEmail(auth, email);
-    Swal.fire({ icon: 'success', title: 'E-mail enviado!', text: `Instruções enviadas para ${email}.`, confirmButtonColor: '#3b7ff5' });
+    // Usa Firebase REST API com o token do admin para alterar a senha do usuário
+    const adminToken = await auth.currentUser.getIdToken();
+    const resp = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:update?key=${firebaseConfig.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ localId: uid, password: novaSenha })
+      }
+    );
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    Swal.fire({ icon: 'success', title: 'Senha alterada!', text: `Senha de ${email} atualizada com sucesso.`, confirmButtonColor: '#3b7ff5' });
   } catch(e) {
-    Swal.fire({ icon: 'error', title: 'Erro', text: e.message });
+    // Fallback: envia e-mail de redefinição
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Swal.fire({ icon: 'info', title: 'Link enviado', html: `Não foi possível alterar a senha diretamente.<br>Um <b>link de redefinição</b> foi enviado para <b>${email}</b>.`, confirmButtonColor: '#3b7ff5' });
+    } catch(e2) {
+      Swal.fire({ icon: 'error', title: 'Erro', text: e2.message });
+    }
   }
 };
 
@@ -554,6 +670,7 @@ window.excluirUsuario = async function(uid, email) {
 };
 
 window.criarUsuario = async function() {
+  const nome  = document.getElementById('novo-nome').value.trim();
   const email = document.getElementById('novo-email').value.trim();
   const senha = document.getElementById('novo-senha').value.trim();
   const isAdm = document.getElementById('novo-admin').value === 'true';
@@ -562,19 +679,26 @@ window.criarUsuario = async function() {
   if (!senha || senha.length < 6)     { msg.innerHTML = '<span style="color:red">⚠️ Senha deve ter ao menos 6 caracteres.</span>'; return; }
   msg.innerHTML = '<span style="color:var(--muted)">⏳ Criando usuário...</span>';
   try {
-    const { initializeApp, getApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { initializeApp, getApp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js');
     const { getAuth: getAuth2, createUserWithEmailAndPassword, signOut: signOut2 } =
-      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+      await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
     let appSec;
-    try { appSec = getApp('sec'); } catch { appSec = initializeApp({ apiKey:"AIzaSyBb8UGRV8qcjV6-_kd7WucWhoJBKSHcUac", authDomain:"mpleaoerp.firebaseapp.com", projectId:"mpleaoerp" }, 'sec'); }
+    try { appSec = getApp('sec'); } catch { appSec = initializeApp(firebaseConfig, 'sec'); }
     const authSec = getAuth2(appSec);
     const cred = await createUserWithEmailAndPassword(authSec, email, senha);
-    await setDoc(doc(db, 'usuarios', cred.user.uid), { email, admin: isAdm, criado_em: new Date().toISOString(), criado_por: usuarioAtual?.email || '' });
+    await setDoc(doc(db, 'usuarios', cred.user.uid), {
+      email,
+      nome: nome || email.split('@')[0],
+      admin: isAdm,
+      criado_em: new Date().toISOString(),
+      criado_por: usuarioAtual?.email || ''
+    });
     await signOut2(authSec);
+    document.getElementById('novo-nome').value  = '';
     document.getElementById('novo-email').value = '';
     document.getElementById('novo-senha').value = '';
     document.getElementById('novo-admin').value = 'false';
-    msg.innerHTML = `<span style="color:var(--accent2)">✅ Usuário <b>${email}</b> criado!</span>`;
+    msg.innerHTML = `<span style="color:var(--accent2)">✅ Usuário <b>${nome || email}</b> criado!</span>`;
     await carregarUsuarios();
   } catch(e) {
     const erros = { 'auth/email-already-in-use':'E-mail já cadastrado.', 'auth/invalid-email':'E-mail inválido.', 'auth/weak-password':'Senha muito fraca.' };
@@ -621,12 +745,23 @@ window.exportarBackup = async function() {
     await new Promise(r => setTimeout(r, 10));
   }
 
+  // Exporta configurações do sistema
+  bar.style.width = '93%'; lbl.textContent = 'Exportando configurações...';
+  try {
+    const configSnap = await getDocs(collection(db, 'configuracoes'));
+    const configRows = configSnap.docs.map(d => ({ _id: d.id, dados: JSON.stringify(d.data()) }));
+    const wsConfig = XLSX.utils.json_to_sheet(configRows.length ? configRows : [{ _id: '', dados: '' }]);
+    wsConfig['!cols'] = [{ wch: 22 }, { wch: 100 }];
+    XLSX.utils.book_append_sheet(wb, wsConfig, 'CONFIGURACOES');
+  } catch(e) { console.warn('Erro ao exportar configuracoes:', e); }
+
   // Instruções
   const wsI = XLSX.utils.aoa_to_sheet([
-    ['BACKUP MPLEÃO ERP — INSTRUÇÕES'],[''],
+    ['BACKUP Matrix ERP — INSTRUÇÕES'],[''],
     ['• A coluna _id é o identificador único no Firebase — NÃO altere'],
     ['• Registros com _id existente serão ATUALIZADOS na importação'],
     ['• Linhas sem _id com dados serão CRIADAS como novos registros'],
+    ['• A aba CONFIGURACOES contém identidade da empresa, frete, estoque e contador'],
     ['• Faça sempre um backup antes de importar'],
   ]);
   wsI['!cols'] = [{ wch: 80 }];
@@ -635,7 +770,9 @@ window.exportarBackup = async function() {
   bar.style.width = '100%'; lbl.textContent = 'Pronto!';
   const now = new Date();
   const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-  XLSX.writeFile(wb, `MPLEAO_Backup_${stamp}.xlsx`);
+  let _nomeArq = 'MatrixERP';
+  try { const _e = JSON.parse(localStorage.getItem('empresaConfig')||'{}'); if (_e.nome_empresa) _nomeArq = _e.nome_empresa.replace(/[^a-zA-Z0-9À-ÿ]/g,'_'); } catch(e) {}
+  XLSX.writeFile(wb, `${_nomeArq}_Backup_${stamp}.xlsx`);
   btn.disabled = false; btn.innerHTML = '✅ Backup gerado! Exportar novamente';
 };
 
@@ -649,7 +786,7 @@ window.aoSelecionarArquivo = function(event) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       dadosArquivo = {};
-      const mapa = { 'CLIENTES':'clientes','PRODUTOS':'produtos','PEDIDOS':'pedidos','PARCELAS':'parcelas' };
+      const mapa = { 'CLIENTES':'clientes','PRODUTOS':'produtos','PEDIDOS':'pedidos','PARCELAS':'parcelas','CONFIGURACOES':'configuracoes' };
       for (const [aba, chave] of Object.entries(mapa)) {
         if (wb.SheetNames.includes(aba)) dadosArquivo[chave] = XLSX.utils.sheet_to_json(wb.Sheets[aba], { defval: '' });
       }
@@ -686,6 +823,17 @@ function montarPreviewRestore() {
       <span style="color:var(--accent2);margin-left:14px">✨ ${novos} novos</span>
       <span style="color:var(--accent);margin-left:10px">🔄 ${atualiza} a atualizar</span></div>`;
   }
+  // Configurações
+  if (dadosArquivo.configuracoes) {
+    const cfgValidas = dadosArquivo.configuracoes.filter(r => String(r._id||'').trim() !== '' && String(r.dados||'').trim() !== '');
+    if (cfgValidas.length > 0) {
+      statsEl.innerHTML += `<div class="stat"><div class="stat-val blue">⚙️ ${cfgValidas.length}</div><div class="stat-label">Configurações</div></div>`;
+      detEl.innerHTML   += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:13px;">
+        <strong>⚙️ Configurações do Sistema</strong>
+        <span style="color:var(--accent);margin-left:14px">🔄 ${cfgValidas.length} doc(s) a restaurar</span>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Identidade da empresa, frete, estoque, contador de pedidos.</div></div>`;
+    }
+  }
   document.getElementById('restore-step1').classList.add('hidden');
   document.getElementById('restore-step2').classList.remove('hidden');
 }
@@ -695,6 +843,10 @@ window.mostrarConfirmacaoRestore = function() {
   const ordens = [{key:'clientes',icon:'👥',label:'Clientes'},{key:'produtos',icon:'📦',label:'Produtos'},{key:'pedidos',icon:'📋',label:'Pedidos'},{key:'parcelas',icon:'💰',label:'Parcelas'}];
   for (const { key, icon, label } of ordens) {
     if (dadosArquivo[key]) html += `${icon} <strong>${label}:</strong> ${dadosArquivo[key].length} registro(s)<br>`;
+  }
+  if (dadosArquivo.configuracoes) {
+    const cfgValidas = dadosArquivo.configuracoes.filter(r => String(r._id||'').trim() !== '' && String(r.dados||'').trim() !== '');
+    if (cfgValidas.length > 0) html += `⚙️ <strong>Configurações:</strong> ${cfgValidas.length} doc(s)<br>`;
   }
   document.getElementById('resumo-restore').innerHTML = html;
   document.getElementById('confirm-restore').value = '';
@@ -775,6 +927,27 @@ window.executarRestore = async function() {
   await upsert('produtos','Produtos');
   await upsert('pedidos','Pedidos');
   await upsert('parcelas','Parcelas');
+
+  // Restaura configurações do sistema (merge — não apaga o que não veio no backup)
+  if (dadosArquivo.configuracoes) {
+    addLog('warn', `\n── CONFIGURAÇÕES ──────────────────`);
+    for (const row of dadosArquivo.configuracoes) {
+      const id = String(row._id || '').trim();
+      if (!id || !row.dados) continue;
+      try {
+        let dados = {};
+        if (typeof row.dados === 'string') { try { dados = JSON.parse(row.dados); } catch(e) { addLog('err', `  ❌ Config '${id}': JSON inválido`); continue; } }
+        else if (typeof row.dados === 'object') dados = row.dados;
+        if (Object.keys(dados).length === 0) continue;
+        await setDoc(doc(db, 'configuracoes', id), dados, { merge: true });
+        if (id === 'empresa') localStorage.setItem('empresaConfig', JSON.stringify(dados));
+        addLog('upd', `  🔄 Configuração '${id}' → restaurada`);
+        atualizados++;
+      } catch(e) { addLog('err', `  ❌ Config '${id}': ${e.message}`); erros++; }
+    }
+    addLog('ok', `  ✅ Configurações concluídas`);
+  }
+
   addLog('ok', `\n✅ Importação finalizada!`);
 
   stats.innerHTML = `
@@ -828,7 +1001,7 @@ window.executarReset = async function() {
   await setDoc(doc(db, 'configuracoes', 'contador_pedidos'), { ultimo_numero: 0 });
 
   await Swal.fire({ icon: 'success', title: 'Sistema resetado!', timer: 2000, showConfirmButton: false });
-  window.location.href = 'index.html';
+  window.location.href = 'pedidos.html';
 };
 
 // ══════════════════════════════════════════════════════════
@@ -839,6 +1012,7 @@ window.abrirPainel = function(id) {
   const el = document.getElementById(id);
   if (el) { el.classList.add('visible'); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   if (id === 'painel-config') carregarConfiguracoes();
+  if (id === 'painel-identidade') carregarIdentidade();
 };
 
 window.fecharPainel = function(id) {
@@ -926,6 +1100,61 @@ window.salvarConfiguracoes = async function() {
     if(msg) msg.innerHTML = '<span style="color:var(--accent2)">✅ Configurações salvas com sucesso!</span>';
   } catch(e) {
     if(msg) msg.innerHTML = '<span style="color:red">❌ Erro ao salvar: ' + e.message + '</span>';
+  }
+};
+
+// ══════════════════════════════════════════════════════════
+// IDENTIDADE DA EMPRESA
+// ══════════════════════════════════════════════════════════
+async function carregarIdentidade() {
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'empresa'));
+    const d = snap.exists() ? snap.data() : {};
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('id-nome-empresa', d.nome_empresa);
+    set('id-slogan',       d.slogan);
+    set('id-documento',    d.documento);
+    set('id-telefone',     d.telefone);
+    set('id-endereco',     d.endereco);
+    const modo = d.impressao_modo || 'simples';
+    const radio = document.getElementById('modo-' + modo);
+    if (radio) radio.checked = true;
+    _atualizarBordasModo(modo);
+  } catch(e) { console.error('Erro ao carregar identidade:', e); }
+}
+
+function _atualizarBordasModo(modo) {
+  const lblS = document.getElementById('lbl-modo-simples');
+  const lblC = document.getElementById('lbl-modo-completo');
+  if (lblS) lblS.style.borderColor = modo === 'simples' ? 'var(--accent)' : 'var(--border)';
+  if (lblC) lblC.style.borderColor = modo === 'completo' ? 'var(--accent)' : 'var(--border)';
+}
+
+// Atualiza borda ao clicar nos radios
+document.querySelectorAll('input[name="impressao-modo"]').forEach(r => {
+  r.addEventListener('change', () => _atualizarBordasModo(r.value));
+});
+
+window.salvarIdentidade = async function() {
+  const get = id => (document.getElementById(id)?.value || '').trim();
+  const nomeEmpresa    = get('id-nome-empresa');
+  const slogan         = get('id-slogan');
+  const documento      = get('id-documento');
+  const telefone       = get('id-telefone');
+  const endereco       = get('id-endereco');
+  const impressao_modo = document.querySelector('input[name="impressao-modo"]:checked')?.value || 'simples';
+  const msg            = document.getElementById('id-msg');
+  if (!nomeEmpresa) {
+    if (msg) msg.innerHTML = '<span style="color:red">⚠️ Informe o nome da empresa.</span>';
+    return;
+  }
+  try {
+    const dados = { nome_empresa: nomeEmpresa, slogan, documento, telefone, endereco, impressao_modo };
+    await setDoc(doc(db, 'configuracoes', 'empresa'), dados);
+    localStorage.setItem('empresaConfig', JSON.stringify(dados));
+    if (msg) msg.innerHTML = '<span style="color:var(--accent2)">✅ Identidade salva! Recarregue o sistema para ver as alterações.</span>';
+  } catch(e) {
+    if (msg) msg.innerHTML = '<span style="color:red">❌ Erro ao salvar: ' + e.message + '</span>';
   }
 };
 

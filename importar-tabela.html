@@ -218,12 +218,12 @@
 </main>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, doc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, updateDoc, doc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { firebaseConfig } from "./firebase-config.js";
 
-const _cfg = { apiKey:"AIzaSyAx7DPgIb5SfnIe6V2769NmxXHb-mvfvmc", authDomain:"matrix-zion-erp.firebaseapp.com", projectId:"matrix-zion-erp", storageBucket:"matrix-zion-erp.firebasestorage.app", messagingSenderId:"904407462438", appId:"1:904407462438:web:6eae08ec0ca69d46eaece7" };
-const app = getApps().length ? getApp() : initializeApp(_cfg);
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
