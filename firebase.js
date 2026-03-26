@@ -1339,9 +1339,9 @@ function renderizarTudo() {
     _pag.produtos.dados = window.bancoProdutos;
     _pag.pedidos.pagina = _pag.clientes.pagina = _pag.produtos.pagina = 1;
 
-    _renderPedidos();
-    _renderClientes();
-    _renderProdutos();
+    if (document.getElementById('wrap-pedidos-pag') || document.getElementById('tabela-pedidos')) _renderPedidos();
+    if (document.getElementById('wrap-clientes-pag') || document.getElementById('lista-clientes')) _renderClientes();
+    if (document.getElementById('lista-produtos')) _renderProdutos();
 
     // Select cliente no pedido
     const selectCliente = document.getElementById('input-cliente');
@@ -1432,7 +1432,7 @@ function _renderClientes() {
     }).join('') || '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum cliente encontrado</td></tr>';
 
     const wrap = document.getElementById('wrap-clientes-pag');
-    if (wrap) { wrap.querySelector('tbody').innerHTML = html; const p = wrap.querySelector('.pag-ctrl'); if(p) p.outerHTML = _pagControles(total,_pag.clientes.pagina,'clientes'); }
+    if (wrap) { const tb = wrap.querySelector('tbody'); if(tb) tb.innerHTML = html; const p = wrap.querySelector('.pag-ctrl'); if(p) p.outerHTML = _pagControles(total,_pag.clientes.pagina,'clientes'); }
     const tbl = document.getElementById('lista-clientes'); if(tbl) tbl.innerHTML = html;
     const ctrl = document.getElementById('pag-clientes'); if(ctrl) ctrl.innerHTML = _pagControles(total,_pag.clientes.pagina,'clientes');
 }
