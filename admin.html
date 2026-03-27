@@ -991,17 +991,33 @@ window.executarReset = async function() {
 
   Swal.fire({ title: 'Apagando dados...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-  for (const col of ['pedidos','clientes','produtos','parcelas','locks']) {
-    const snap = await getDocs(collection(db, col));
-    if (snap.empty) continue;
-    const batch = writeBatch(db);
-    snap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-  }
-  await setDoc(doc(db, 'configuracoes', 'contador_pedidos'), { ultimo_numero: 0 });
+  try {
+    for (const col of ['pedidos','clientes','produtos','parcelas','locks']) {
+      const snap = await getDocs(collection(db, col));
+      if (snap.empty) continue;
+      // Firestore limita 500 ops por batch — divide se necessário
+      const chunks = [];
+      for (let i = 0; i < snap.docs.length; i += 490) chunks.push(snap.docs.slice(i, i + 490));
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+    await setDoc(doc(db, 'configuracoes', 'contador_pedidos'), { ultimo_numero: 0 });
 
-  await Swal.fire({ icon: 'success', title: 'Sistema resetado!', timer: 2000, showConfirmButton: false });
-  window.location.href = 'pedidos.html';
+    await Swal.fire({ icon: 'success', title: 'Sistema resetado!', timer: 2000, showConfirmButton: false });
+    window.location.href = 'pedidos.html';
+  } catch(e) {
+    console.error('Erro no reset:', e);
+    Swal.fire({
+      icon: 'error',
+      title: 'Erro ao resetar',
+      html: `<p style="font-size:13px;color:#666;">${e.message}</p>
+             <p style="font-size:12px;color:#999;margin-top:8px;">Verifique se você está autenticado como administrador e tente novamente.</p>`,
+      confirmButtonColor: '#dc2626'
+    });
+  }
 };
 
 // ══════════════════════════════════════════════════════════
