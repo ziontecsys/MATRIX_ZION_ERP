@@ -294,9 +294,14 @@
                     </div>
                 </div>
 
-                <div id="aviso-bloqueio" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded" role="alert">
-                    <p class="font-bold">⚠️ Pedido bloqueado para edição</p>
-                    <p>Este pedido está em <span id="status-bloqueio"></span> e não pode ser alterado.</p>
+                <div id="aviso-bloqueio" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded flex items-center justify-between gap-4" role="alert">
+                    <div>
+                        <p class="font-bold">⚠️ Pedido bloqueado para edição</p>
+                        <p>Este pedido está em <span id="status-bloqueio"></span> e não pode ser alterado.</p>
+                    </div>
+                    <button id="btn-reabrir-orcamento" onclick="window.reabrirParaOrcamento()" class="hidden shrink-0 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold px-4 py-2 rounded shadow transition">
+                        🔓 Reabrir para Orçamento
+                    </button>
                 </div>
 
             </div><!-- /conteudo-pedido -->

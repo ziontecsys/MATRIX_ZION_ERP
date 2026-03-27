@@ -73,10 +73,12 @@ onAuthStateChanged(auth, async (user) => {
             const userSnap = await getDoc(userRef);
             if (!userSnap.exists()) {
                 await setDoc(userRef, { email: user.email, uid: user.uid, admin: false, criado_em: new Date().toISOString() });
-            } else if (!userSnap.data().email) {
-                await setDoc(userRef, { email: user.email }, { merge: true });
+                window.usuarioAdmin = false;
+            } else {
+                if (!userSnap.data().email) await setDoc(userRef, { email: user.email }, { merge: true });
+                window.usuarioAdmin = userSnap.data().admin === true;
             }
-        } catch(e) { console.warn('Erro ao registrar usuário:', e); }
+        } catch(e) { console.warn('Erro ao registrar usuário:', e); window.usuarioAdmin = false; }
         carregarMemoriaBanco();
     }
 });
@@ -1075,11 +1077,14 @@ function _aplicarBloqueioStatus(status) {
         }
     };
 
+    const btnReabrir = document.getElementById('btn-reabrir-orcamento');
+
     if (status === 'Orçamento') {
         bloquearCampos('cliente');
         _bloquearBtn(btnAdicionar, false);
         _bloquearBtn(btnSalvar, false);
         if (aviso) aviso.classList.add('hidden');
+        if (btnReabrir) btnReabrir.classList.add('hidden');
     } else {
         bloquearCampos('tudo');
         _bloquearBtn(btnAdicionar, true);
@@ -1087,6 +1092,15 @@ function _aplicarBloqueioStatus(status) {
         if (aviso && spanSt) {
             spanSt.innerText = status;
             aviso.classList.remove('hidden');
+        }
+        // Mostra botão de reabrir apenas para admins e apenas em statuses reversíveis
+        if (btnReabrir) {
+            const statusBloqueadoDefinitivo = ['Pedido Cancelado', 'Orçamento Não Aprovado'].includes(status);
+            if (window.usuarioAdmin && !statusBloqueadoDefinitivo) {
+                btnReabrir.classList.remove('hidden');
+            } else {
+                btnReabrir.classList.add('hidden');
+            }
         }
     }
 }
@@ -1924,6 +1938,66 @@ async function salvarPedidoAtual() {
     }
 }
 window.salvarPedidoAtual = salvarPedidoAtual;
+
+// ==========================================
+// REABRIR PEDIDO PARA ORÇAMENTO (admin)
+// ==========================================
+window.reabrirParaOrcamento = async function() {
+    const id = document.getElementById('pedido-id-atual')?.value;
+    if (!id) return;
+
+    const pedido = window.bancoPedidos.find(p => p.id === id);
+    if (!pedido) return;
+
+    const statusesComEstoque = ['Produção', 'Em Entrega', 'Entregue'];
+    const temEstoqueDescontado = statusesComEstoque.includes(pedido.status);
+
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: '🔓 Reabrir para Orçamento?',
+        html: `
+            <p style="margin-bottom:10px;">O pedido <strong>#${pedido.numero_sequencial?.toString().padStart(3,'0')}</strong> voltará para <strong>Orçamento</strong> e ficará totalmente editável.</p>
+            <div style="text-align:left;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:12px;font-size:13px;">
+                <strong>O que será revertido automaticamente:</strong>
+                <ul style="margin:8px 0 0 16px;list-style:disc;">
+                    ${temEstoqueDescontado ? '<li>Estoque dos itens será <strong>estornado</strong></li>' : ''}
+                    <li>Parcelas financeiras serão <strong>canceladas</strong></li>
+                </ul>
+            </div>`,
+        showCancelButton: true,
+        confirmButtonText: '🔓 Sim, reabrir',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#6b7280'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        Swal.fire({ title: 'Reabrindo pedido...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        // Normaliza itens (pode vir como string JSON do Excel)
+        let _itens = pedido.itens;
+        if (typeof _itens === 'string') { try { _itens = JSON.parse(_itens); } catch(e) { _itens = []; } }
+        if (!Array.isArray(_itens)) _itens = [];
+
+        if (temEstoqueDescontado && _itens.length > 0) await estornarEstoque(_itens);
+        await cancelarParcelasDoPedido(id, pedido.numero_sequencial);
+        await updateDoc(doc(db, 'pedidos', id), { status: 'Orçamento' });
+
+        const idx = window.bancoPedidos.findIndex(p => p.id === id);
+        if (idx > -1) window.bancoPedidos[idx].status = 'Orçamento';
+
+        Swal.close();
+        await Swal.fire({ icon: 'success', title: 'Pedido reaberto!', text: 'O pedido voltou para Orçamento e pode ser editado normalmente.', timer: 2000, showConfirmButton: false });
+
+        window.abrirPedidoParaEdicao(id);
+
+    } catch(e) {
+        console.error('Erro ao reabrir pedido:', e);
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível reabrir o pedido: ' + e.message, confirmButtonColor: '#3b82f6' });
+    }
+};
 
 // ==========================================
 // ABRIR PEDIDO PARA EDIÇÃO
