@@ -1604,7 +1604,7 @@ window.exportarBackupRapido = async function() {
         const colsDef = [
             { key:'clientes', nome:'CLIENTES', campos:['_id','codigo','nome','telefone','documento','email','cep','endereco','nascimento','limite','observacoes'] },
             { key:'produtos',  nome:'PRODUTOS', campos:['_id','codigo','codigo_fornecedor','descricao','categoria','fornecedor','unidade','valor_base','custo','estoque_atual'] },
-            { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_pedagio','frete_valor_total','itens','data_criacao'] },
+            { key:'pedidos',   nome:'PEDIDOS',  campos:['_id','numero_sequencial','status','cliente_codigo','cliente_id','cliente_nome','cliente_documento','cliente_telefone','cliente_endereco','valor_total','desconto','acrescimo','motivo_acrescimo','condicao_pagamento','primeiro_vencimento','frete_km','frete_litro','frete_consumo','frete_pedagio','frete_valor_total','itens','data_criacao'] },
             { key:'parcelas',  nome:'PARCELAS', campos:['_id','numeroPedido','pedidoId','clienteNome','clienteCodigo','clienteId','valor','vencimento','status','numeroParcela','totalParcelas','dataCriacao','dataPagamento'] },
         ];
         const bancos = { clientes: window.bancoClientes, produtos: window.bancoProdutos, pedidos: window.bancoPedidos };
@@ -1860,8 +1860,10 @@ async function salvarPedidoAtual() {
             previsao_entrega:      document.getElementById('input-previsao')?.value || '',
             forma_pagamento:       document.getElementById('select-pagamento')?.value || '',
             frete_km:              km,
+            frete_litro:           litro,
+            frete_consumo:         consumo,
             frete_pedagio:         pedag,
-			frete_valor_total:     valorFreteTotal, // NOVO CAMPO
+            frete_valor_total:     valorFreteTotal,
         };
 
         // Movimentação de estoque
@@ -2064,6 +2066,8 @@ window.abrirPedidoParaEdicao = function(id) {
     document.getElementById('input-primeiro-vencimento').value = pedido.primeiro_vencimento || '';
     document.getElementById('input-km').value      = pedido.frete_km      > 0 ? pedido.frete_km      : '0';
     document.getElementById('input-pedagio').value = pedido.frete_pedagio > 0 ? pedido.frete_pedagio : '';
+    if (pedido.frete_litro)   document.getElementById('input-litro').value   = pedido.frete_litro;
+    if (pedido.frete_consumo) document.getElementById('input-consumo').value = pedido.frete_consumo;
     document.getElementById('input-previsao').value = pedido.previsao_entrega || '';
     document.getElementById('input-desconto').value = pedido.desconto > 0 ? pedido.desconto : '';
     document.getElementById('input-acrescimo').value = pedido.acrescimo > 0 ? pedido.acrescimo.toFixed(2).replace('.',',') : '';
