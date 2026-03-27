@@ -705,11 +705,12 @@ async function gerarPDF() {
             return; // salvarPedidoAtual já mostra o erro
         }
         btn.disabled = false;
+        btn.innerHTML = '🖨️ Imprimir PDF';
     }
 
     // ── BUSCA DADOS COMPLETOS DO CLIENTE ────────────────────────────────
     const clienteObj = window.bancoClientes?.find(c => c.nome === nomeCliente) || {};
-    const textoOriginal = btn.innerHTML;
+    const textoOriginal = '🖨️ Imprimir PDF';
     btn.innerHTML = '✨ Gerando PDF...';
     btn.disabled = true;
 
