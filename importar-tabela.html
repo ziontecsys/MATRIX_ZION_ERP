@@ -227,16 +227,13 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Garante persistência local antes de verificar sessão
-setPersistence(auth, browserLocalPersistence).then(() => {
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      window.location.replace('login.html');
-    } else {
-      document.getElementById('section-upload').style.display = 'block';
-      document.getElementById('loading-auth').style.display = 'none';
-    }
-  });
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.replace('login.html');
+  } else {
+    document.getElementById('section-upload').style.display = 'block';
+    document.getElementById('loading-auth').style.display = 'none';
+  }
 });
 
 window._db=db; window._col=collection; window._add=addDoc; window._upd=updateDoc; window._doc=doc; window._ts=serverTimestamp;
